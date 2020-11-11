@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jul 31 18:04:22 2020
-
+Python Codes for Chapter: 
+Insights from Network data
 @author: JoseManuel
 """
 

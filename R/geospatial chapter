@@ -1,0 +1,766 @@
+### R code from vignette source 'geospatial.Rnw'
+
+###################################################
+### code chunk number 1: readURL
+###################################################
+link1='https://github.com/resourcesbookvisual/data/'
+link2='raw/master/contriWA.RDS'
+LINK=paste0(link1,link2)
+#getting the data TABLE from the file in the cloud:
+contriWA=readRDS(file=url(LINK))
+
+
+###################################################
+### code chunk number 2: readLOCAL
+###################################################
+head(contriWA)
+
+
+###################################################
+### code chunk number 3: str-contriwa
+###################################################
+str(contriWA,width = 60, strict.width = 'cut')
+
+
+###################################################
+### code chunk number 4: readLocalMap (eval = FALSE)
+###################################################
+## folderMap="WAzips"
+## fileMap="WAzips.shp"
+## locationMap=file.path(folderMap,fileMap)
+
+
+###################################################
+### code chunk number 5: geospatial.Rnw:72-74 (eval = FALSE)
+###################################################
+## library(sf)
+## wazipMap=st_read(locationMap)
+
+
+###################################################
+### code chunk number 6: geospatial.Rnw:157-160
+###################################################
+myGit="https://github.com/resourcesbookvisual/data/"
+myGeo="raw/master/WAzipsGeo.json"
+mapLink=paste0(myGit,myGeo)
+
+
+###################################################
+### code chunk number 7: geospatial.Rnw:165-167
+###################################################
+library(sf)
+wazipMap=read_sf(mapLink)
+
+
+###################################################
+### code chunk number 8: geospatial.Rnw:173-177
+###################################################
+library(ggplot2)
+base= ggplot(data=wazipMap) + theme_classic()
+basemap= base + geom_sf(fill='black', #color of polygon
+                        color=NA) #color of border
+
+
+###################################################
+### code chunk number 9: basemap
+###################################################
+basemap
+
+
+###################################################
+### code chunk number 10: geospatial.Rnw:211-212
+###################################################
+str(wazipMap$ZCTA5CE10)
+
+
+###################################################
+### code chunk number 11: geospatial.Rnw:228-233
+###################################################
+library(dplyr)
+contriWAsub=contriWA %>% 
+              filter(cash_or_in_kind=="Cash" &
+                     party%in%c("DEMOCRAT","REPUBLICAN") &
+                     election_year==2012)
+
+
+###################################################
+### code chunk number 12: geospatial.Rnw:243-244
+###################################################
+nrow(contriWAsub)
+
+
+###################################################
+### code chunk number 13: summary_amount
+###################################################
+# Distribution of contributions:
+summary(contriWAsub$amount)
+
+
+###################################################
+### code chunk number 14: table_to_df
+###################################################
+# Destination of contributions:
+as.data.frame(table(contriWAsub$party))
+
+
+###################################################
+### code chunk number 15: geospatial.Rnw:261-263
+###################################################
+# Destination of contributions:
+length(unique(contriWAsub$contributor_zip))
+
+
+###################################################
+### code chunk number 16: geospatial.Rnw:267-268
+###################################################
+summary(unique(as.numeric(contriWAsub$contributor_zip)))
+
+
+###################################################
+### code chunk number 17: geospatial.Rnw:272-273
+###################################################
+summary(unique(as.numeric(wazipMap$ZCTA5CE10)))
+
+
+###################################################
+### code chunk number 18: contrisum
+###################################################
+contrisum=contriWAsub %>% 
+          group_by(contributor_zip) %>% 
+          summarise(REPUBLICAN=sum(amount[party=="REPUBLICAN"]),
+                    DEMOCRAT=sum(amount)-REPUBLICAN,
+                    total=sum(amount)) %>% 
+          as.data.frame()
+# you get:
+head(contrisum)
+
+
+###################################################
+### code chunk number 19: subset_wazipmap
+###################################################
+# keeping zip (column 2) and last column (the 'geometry')
+
+wazipMap=wazipMap[,c('ZCTA5CE10','geometry')]
+
+
+###################################################
+### code chunk number 20: geospatial.Rnw:313-316
+###################################################
+allZip=merge(wazipMap,contrisum,
+             by.x='ZCTA5CE10', by.y='contributor_zip',
+             all.x=TRUE)
+
+
+###################################################
+### code chunk number 21: geospatial.Rnw:327-329
+###################################################
+#same amount of rows?
+nrow(allZip)==nrow(wazipMap)
+
+
+###################################################
+### code chunk number 22: getWinner
+###################################################
+#creating the dissolving column
+allZip$winnerREP=allZip$REPUBLICAN >allZip$DEMOCRAT
+
+
+###################################################
+### code chunk number 23: geospatial.Rnw:341-342
+###################################################
+summary(allZip$winnerREP)
+
+
+###################################################
+### code chunk number 24: plotmerge
+###################################################
+mergedMap = ggplot(data=allZip) + 
+            geom_sf(aes(fill=winnerREP)) + 
+            scale_fill_manual(values = c('black','white'),
+                              na.value = "grey")
+
+
+###################################################
+### code chunk number 25: mergedMap
+###################################################
+mergedMap
+
+
+###################################################
+### code chunk number 26: simplifying
+###################################################
+library(rmapshaper)
+waBetter=ms_simplify(wazipMap)
+
+
+###################################################
+### code chunk number 27: dissolving
+###################################################
+waBorder <- ms_dissolve(waBetter)
+
+
+###################################################
+### code chunk number 28: geospatial.Rnw:398-402
+###################################################
+borderMap=ggplot(waBorder) + 
+            theme_classic() +
+              geom_sf(fill='white', 
+                      color='black') # border color
+
+
+###################################################
+### code chunk number 29: borderMap
+###################################################
+borderMap
+
+
+###################################################
+### code chunk number 30: simplifying2
+###################################################
+#optimizing
+allZipBetter=ms_simplify(allZip)
+#dissolving
+allZipREP=ms_dissolve(allZipBetter,field = "winnerREP")
+#plotting the dissolved map
+dividedZip= ggplot(data = allZipREP) + theme_classic() +
+            geom_sf(aes(fill=winnerREP))  + 
+            scale_fill_manual(values = c('black','white'),
+                              na.value = "grey")
+
+
+###################################################
+### code chunk number 31: dividedZip
+###################################################
+dividedZip
+
+
+###################################################
+### code chunk number 32: geospatial.Rnw:458-459
+###################################################
+contriWAsub[,c(9:10)]%>% head()
+
+
+###################################################
+### code chunk number 33: geospatial.Rnw:465-469
+###################################################
+WApoints= st_as_sf(contriWAsub,
+                   coords = c("Lon", "Lat"), #in that order
+                   remove = FALSE,
+                   crs = st_crs(allZip)$epsg)
+
+
+###################################################
+### code chunk number 34: geospatial.Rnw:474-475
+###################################################
+class(WApoints)
+
+
+###################################################
+### code chunk number 35: allZipNA_create
+###################################################
+allZipNA=allZip[!complete.cases(allZip$total),]
+
+
+###################################################
+### code chunk number 36: layers1
+###################################################
+#layers respect the order:
+layerBorder=ggplot(data=waBorder) + theme_void() + 
+                                    geom_sf(fill=NA)
+
+layerMissing=layerBorder + geom_sf(data = allZipNA,
+                                   fill='grey')
+
+layerPoint= layerMissing + geom_sf(data = WApoints,
+                                  size = 0.1,
+                                  color='black',
+                                  alpha=0.1) #transparency
+
+
+###################################################
+### code chunk number 37: layerPoint
+###################################################
+layerPoint 
+
+
+###################################################
+### code chunk number 38: reprojected_text
+###################################################
+layerPointRP= layerPoint +  coord_sf(crs = "+proj=merc")
+
+
+###################################################
+### code chunk number 39: reprojected_epsg
+###################################################
+layerPointRP= layerPoint +  coord_sf(crs = st_crs(3857))
+
+
+###################################################
+### code chunk number 40: layerPointRP
+###################################################
+layerPointRP 
+
+
+###################################################
+### code chunk number 41: countymapget
+###################################################
+myGit="https://github.com/resourcesbookvisual/data/"
+myGeo2="raw/master/WA_County_Boundaries.json"
+mapLink2=paste0(myGit,myGeo2)
+waCounties=read_sf(mapLink2)
+waCounties[,c("JURISDIC_2")]
+
+
+###################################################
+### code chunk number 42: geospatial.Rnw:604-605
+###################################################
+waCounties=read_sf(mapLink2,crs=3857)
+
+
+###################################################
+### code chunk number 43: reprojecting
+###################################################
+waCounties=st_transform(waCounties, crs=4326)
+
+
+###################################################
+### code chunk number 44: savingReprojected (eval = FALSE)
+###################################################
+## # extension "geojson" is used instead of "json"
+## # so the driver for the conversion can be easily assigned.
+## st_write(waCounties, "waCountiesfromR.geojson")
+
+
+###################################################
+### code chunk number 45: geospatial.Rnw:634-635
+###################################################
+kingMap=waCounties[waCounties$JURISDIC_2=="King",]
+
+
+###################################################
+### code chunk number 46: geospatial.Rnw:643-644
+###################################################
+st_bbox(kingMap)
+
+
+###################################################
+### code chunk number 47: mapZoomed
+###################################################
+# zooming area:
+forX=st_bbox(kingMap)[c(1,3)] # recovering X range
+forY=st_bbox(kingMap)[c(2,4)] # recovering Y range
+
+# maps of WASHINGTON
+Border=ggplot(data=waBorder) + theme_classic() +
+                               geom_sf(fill='white')
+Zips=Border + geom_sf(data = wazipMap,fill='grey90')
+Points= Zips + geom_sf(data = WApoints,size = 0.1,color='black',
+                       alpha=0.1) #transparency
+# ZOOMING IN:
+zoomedMap=Points +  coord_sf(xlim=forX,ylim = forY) 
+
+
+###################################################
+### code chunk number 48: zoomedMap
+###################################################
+zoomedMap 
+
+
+###################################################
+### code chunk number 49: geospatial.Rnw:688-689
+###################################################
+sum(is.na(allZip$total))
+
+
+###################################################
+### code chunk number 50: geospatial.Rnw:693-694
+###################################################
+allZip=allZip[complete.cases(allZip$total),]
+
+
+###################################################
+### code chunk number 51: geospatial.Rnw:707-710
+###################################################
+base =ggplot(data=waBorder) + geom_sf(fill='red') + theme_void() 
+forDems =base + geom_sf(data=allZip,aes(fill=DEMOCRAT),color=NA) 
+forDems =forDems + guides(fill=FALSE) # no legend
+
+
+###################################################
+### code chunk number 52: geospatial.Rnw:722-723
+###################################################
+forALL = base + geom_sf(data=allZip,aes(fill=total),color=NA) + guides(fill=FALSE)
+
+
+###################################################
+### code chunk number 53: forDems
+###################################################
+forDems
+
+
+###################################################
+### code chunk number 54: forALL
+###################################################
+forALL
+
+
+###################################################
+### code chunk number 55: geospatial.Rnw:765-770
+###################################################
+#new variable:
+allZip$DemChoro=allZip$DEMOCRAT/allZip$total
+
+#plotting new variable
+choro1 = base + geom_sf(data=allZip,aes(fill = DemChoro),color=NA) 
+
+
+###################################################
+### code chunk number 56: choro1
+###################################################
+choro1
+
+
+###################################################
+### code chunk number 57: geospatial.Rnw:799-805
+###################################################
+link3='raw/master/covidCountyWA.csv'
+LINK=paste0(link1,link3)
+#getting the data TABLE from the file in the cloud:
+covid=read.csv(file=url(LINK),stringsAsFactors = F)
+#first rows:
+head(covid)
+
+
+###################################################
+### code chunk number 58: geospatial.Rnw:809-811
+###################################################
+covidMap=merge(waCounties[,c("JURISDIC_2")],covid,
+               by.x="JURISDIC_2",by.y="County")
+
+
+###################################################
+### code chunk number 59: geospatial.Rnw:815-816
+###################################################
+explore1=ggplot(covidMap,aes(CasesPer100k)) + geom_histogram()
+
+
+###################################################
+### code chunk number 60: explore1
+###################################################
+explore1 
+
+
+###################################################
+### code chunk number 61: geospatial.Rnw:850-851
+###################################################
+varToPlot=covidMap$CasesPer100k
+
+
+###################################################
+### code chunk number 62: geospatial.Rnw:856-858
+###################################################
+library(classInt)
+cutEqual=classIntervals(varToPlot,n = 5,style = "equal")$brks
+
+
+###################################################
+### code chunk number 63: geospatial.Rnw:863-866
+###################################################
+covidMap$cases_Equal=cut(varToPlot, breaks = cutEqual,
+                        dig.lab=5, # digits to use in legend
+                        include.lowest = T,ordered_result = T)
+
+
+###################################################
+### code chunk number 64: geospatial.Rnw:871-873
+###################################################
+levels(covidMap$cases_Equal)=gsub(","," - ", #substituting
+                                 levels(covidMap$cases_Equal))
+
+
+###################################################
+### code chunk number 65: geospatial.Rnw:877-878
+###################################################
+colorPal="OrRd"
+
+
+###################################################
+### code chunk number 66: geospatial.Rnw:883-886
+###################################################
+base= ggplot(covidMap) + theme_light() 
+choro2=base + geom_sf(aes(fill=cases_Equal))
+choro2=choro2+scale_fill_brewer(palette = colorPal,direction=1) 
+
+
+###################################################
+### code chunk number 67: geospatial.Rnw:893-905
+###################################################
+# get intervals
+cutQuant=classIntervals(varToPlot,n = 5,style = "quantile")$brks
+#create variable
+covidMap$cases_Quant=cut(varToPlot, cutQuant,dig.lab=5,
+                        include.lowest = T,ordered_result = T)
+#change separator
+levels(covidMap$cases_Quant)=gsub(","," - ",
+                                 levels(covidMap$cases_Quant))
+#prepare object
+base= ggplot(covidMap) + theme_light() 
+choro3=base + geom_sf(aes(fill=cases_Quant))
+choro3=choro3+scale_fill_brewer(palette = colorPal,direction=1) 
+
+
+###################################################
+### code chunk number 68: choro2
+###################################################
+choro2
+
+
+###################################################
+### code chunk number 69: choro3
+###################################################
+choro3
+
+
+###################################################
+### code chunk number 70: geospatial.Rnw:951-965
+###################################################
+# get intervals
+cutJenks=classIntervals(varToPlot,n = 5,style = "jenks")$brks
+cutHT=classIntervals(varToPlot,style = "headtails")$brks
+
+#create variable
+covidMap$cases_Jenks=cut(varToPlot, cutJenks,dig.lab=5,
+                        include.lowest = T,ordered_result = T)
+covidMap$cases_HT=cut(varToPlot, cutHT,dig.lab=5,
+                        include.lowest = T,ordered_result = T)
+#change separator of intervals (better legend)
+levels(covidMap$cases_Jenks)=gsub(","," - ",
+                                 levels(covidMap$cases_Jenks))
+levels(covidMap$cases_HT)=gsub(","," - ",
+                              levels(covidMap$cases_HT))
+
+
+###################################################
+### code chunk number 71: choro4nd5
+###################################################
+#prepare object to plot
+base= ggplot(covidMap) + theme_light() 
+#for Jenks
+choro4=base + geom_sf(aes(fill=cases_Jenks))
+choro4=choro4+scale_fill_brewer(palette = colorPal,direction=1) 
+#for Head-Tails
+choro5=base + geom_sf(aes(fill=cases_HT))
+choro5=choro5+scale_fill_brewer(palette = colorPal,direction=1) 
+
+
+###################################################
+### code chunk number 72: choro4
+###################################################
+choro4
+
+
+###################################################
+### code chunk number 73: choro5
+###################################################
+choro5
+
+
+###################################################
+### code chunk number 74: geospatial.Rnw:1024-1026
+###################################################
+library(sf)
+covidMap_reprj=st_transform(covidMap,3857)#mercator
+
+
+###################################################
+### code chunk number 75: geospatial.Rnw:1030-1046
+###################################################
+newDeathVals=100000*(covidMap_reprj$Deaths/covidMap_reprj$Population)
+covidMap_reprj$DeathsPer100k=newDeathVals
+
+varToCut=covidMap_reprj$DeathsPer100k
+
+cutEqualDeath=classIntervals(varToCut,
+                             n = 3,
+                             style = "equal")$brks
+#create variable
+covidMap_reprj$death_equal=cut(varToCut,
+                               cutEqualDeath,dig.lab=5,
+                               include.lowest = T,
+                               ordered_result = T)
+#change separator
+levels(covidMap_reprj$death_equal)=gsub(","," - ",
+                                    levels(covidMap_reprj$death_equal))
+
+
+###################################################
+### code chunk number 76: geospatial.Rnw:1054-1058
+###################################################
+library(cartogram)
+cartoCases=cartogram_ncont(covidMap_reprj,
+                         weight = "CasesPer100k",#var for resize
+                         k=1) #expansion limit
+
+
+###################################################
+### code chunk number 77: geospatial.Rnw:1064-1074
+###################################################
+border=ggplot(covidMap_reprj) + geom_sf(fill="grey95") +
+       theme_void()
+
+cartogram=border+ geom_sf(data=cartoCases, #size
+                          aes(fill=death_equal),
+                          color=NA) #no border
+
+cartogram=cartogram+scale_fill_brewer(palette='YlGnBu',
+                                      direction=1,
+                                      name="DeathsPer100k") 
+
+
+###################################################
+### code chunk number 78: cartogram
+###################################################
+cartogram
+
+
+###################################################
+### code chunk number 79: geospatial.Rnw:1098-1109
+###################################################
+base=ggplot(covidMap_reprj) + 
+     geom_sf(color='grey50') + theme_void()
+
+pointSize=base + geom_sf(data=st_centroid(covidMap_reprj),
+                         aes(fill=death_equal, #color
+                             size=CasesPer100k), #size
+                         pch=21) #shape of dot
+
+pointSize=pointSize+scale_color_brewer(palette='YlGnBu',
+                                      direction=1,
+                                      name="DeathsPer100k")  
+
+
+###################################################
+### code chunk number 80: pointSize
+###################################################
+pointSize
+
+
+###################################################
+### code chunk number 81: geospatial.Rnw:1133-1136
+###################################################
+border=ggplot(data = waBorder) + geom_sf() + theme_void()
+heat=border+geom_density_2d(data = WApoints,
+                              aes(x=Lon,y=Lat))
+
+
+###################################################
+### code chunk number 82: heat
+###################################################
+heat
+
+
+###################################################
+### code chunk number 83: geospatial.Rnw:1157-1159
+###################################################
+REPpoints=WApoints[WApoints$party=="REPUBLICAN",]
+DEMpoints=WApoints[WApoints$party=="DEMOCRAT",]
+
+
+###################################################
+### code chunk number 84: geospatial.Rnw:1163-1172
+###################################################
+base= ggplot(data = waCounties) + theme_void() 
+counties = base + geom_sf(fill=NA)
+
+heatRep = counties + 
+              stat_density2d(data = REPpoints,
+                             aes(x=Lon,
+                                 y=Lat,
+                                 fill = after_stat(level)),
+                                 geom="polygon")
+
+
+###################################################
+### code chunk number 85: geospatial.Rnw:1177-1185
+###################################################
+library(RColorBrewer)
+
+kdpaletteRep=brewer.pal(7,"Reds") 
+
+heatRep = heatRep + 
+              scale_fill_gradientn(colours=kdpaletteRep) +
+                 guides(fill=FALSE)
+
+
+
+###################################################
+### code chunk number 86: geospatial.Rnw:1190-1191
+###################################################
+heatRepKing = heatRep + coord_sf(xlim=forX, ylim = forY) 
+
+
+###################################################
+### code chunk number 87: geospatial.Rnw:1198-1212
+###################################################
+#colors
+kdpaletteDem=brewer.pal(7,"Blues")
+
+heatDem = counties + 
+              stat_density2d(data = DEMpoints,
+                             aes(x=Lon,
+                                 y=Lat,
+                                 fill = after_stat(level)),
+                             geom="polygon")
+heatDem= heatDem + 
+             scale_fill_gradientn(colours=kdpaletteDem) + 
+             guides(fill=FALSE)
+
+heatDemKing = heatDem + coord_sf(xlim=forX, ylim = forY) 
+
+
+###################################################
+### code chunk number 88: heatRepKing
+###################################################
+heatRepKing
+
+
+###################################################
+### code chunk number 89: heatDemKing
+###################################################
+heatDemKing
+
+
+###################################################
+### code chunk number 90: captioningMap
+###################################################
+creditsText="EPSG:3857\nProj=Mercator"
+cartoCap=cartogram + labs(caption = creditsText)
+
+
+###################################################
+### code chunk number 91: annotScale
+###################################################
+library(ggspatial)
+cartoCapSca=cartoCap +
+            annotation_scale(location = "bl", #'tr', etc.
+                             width_hint = 0.2,#size related ti plot
+                             plot_unit = 'mi',#or: 'km','ft', etc.
+                             unit_category='imperial', #or 'metric'
+                             style='ticks') # or 'bar'
+
+
+###################################################
+### code chunk number 92: geospatial.Rnw:1277-1281
+###################################################
+cartoCapScaNorth=cartoCapSca +
+                 annotation_north_arrow(location = "tl",
+                                        style = north_arrow_fancy_orienteering,
+                                        height = unit(0.3, "in"))
+
+
+###################################################
+### code chunk number 93: cartoCapScaNorth
+###################################################
+cartoCapScaNorth
+
+

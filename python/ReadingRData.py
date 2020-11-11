@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Python Codes for Chapter: 
-Visualization Basics
+readingData (not in book)
 """
 
 #%%

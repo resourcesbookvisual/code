@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 18 17:25:13 2020
-
+Python Codes for Chapter: 
+Insights from MULTI variables
 @author: JoseManuel
 """
 

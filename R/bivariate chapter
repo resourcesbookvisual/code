@@ -1,0 +1,991 @@
+### R code from vignette source 'bivariate.Rnw'
+
+###################################################
+### code chunk number 1: datacrime
+###################################################
+# opening file
+linkRepo='https://github.com/resourcesbookvisual/data/'
+linkCRI='raw/master/crime.csv'
+fullLink=paste0(linkRepo,linkCRI)
+crime=read.csv(fullLink,stringsAsFactors = F)
+
+
+###################################################
+### code chunk number 2: datacrime_str
+###################################################
+str(crime,width = 60,strict.width='cut')
+
+
+###################################################
+### code chunk number 3: bivariate.Rnw:30-32
+###################################################
+#contingency table of counts
+(PrecintDaytime=table(crime$Precinct,crime$OccurredDayTime))
+
+
+###################################################
+### code chunk number 4: bivariate.Rnw:37-39
+###################################################
+#sum per rows and columns
+addmargins(PrecintDaytime)
+
+
+###################################################
+### code chunk number 5: bivariate.Rnw:44-47
+###################################################
+#marginal per column (column adds to 1)
+(PrecDayti_mgCol=prop.table(PrecintDaytime,
+                            margin = 2))
+
+
+###################################################
+### code chunk number 6: bivariate.Rnw:52-61
+###################################################
+#making a data frame from contingency table
+PrecDaytiDF=as.data.frame(PrecintDaytime)
+names(PrecDaytiDF)=c("precint","daytime","counts")
+
+#adding marginal columns percents:
+PrecDaytiDF$pctCol=as.data.frame(PrecDayti_mgCol)[,3]
+
+# we have:
+PrecDaytiDF
+
+
+###################################################
+### code chunk number 7: bivariate.Rnw:67-68
+###################################################
+summary(PrecDaytiDF)
+
+
+###################################################
+### code chunk number 8: bivariate.Rnw:72-76
+###################################################
+# reformatting ordinal data
+RightOrder=c("day","afternoon","evening","night")
+PrecDaytiDF$daytime=ordered(PrecDaytiDF$daytime,
+                            levels=RightOrder)
+
+
+###################################################
+### code chunk number 9: bivariate.Rnw:82-92
+###################################################
+library(ggplot2)
+base1=ggplot(data=PrecDaytiDF, 
+             aes(x=precint,
+                 y=counts,
+                 fill=daytime)) + theme_classic()
+
+barDodge1= base1 +  scale_fill_brewer(palette = "Greys")
+barDodge1= barDodge1 + geom_bar(stat="identity",
+                                position="dodge", # DODGE
+                                color='grey') #border of bar
+
+
+###################################################
+### code chunk number 10: barDodge1
+###################################################
+barDodge1
+
+
+###################################################
+### code chunk number 11: bivariate.Rnw:109-112
+###################################################
+minMargiPrecint=apply(PrecintDaytime,1,min)
+sortedMinPrecint=sort(minMargiPrecint)
+sortedMinPrecint
+
+
+###################################################
+### code chunk number 12: bivariate.Rnw:117-120
+###################################################
+# improved values for horizontal axis
+newHorizontals=names(sortedMinPrecint)
+newHorizontals
+
+
+###################################################
+### code chunk number 13: bivariate.Rnw:126-138
+###################################################
+base2=ggplot(data=PrecDaytiDF, 
+             # using reorder
+             aes(x=reorder(precint,counts,FUN = min),
+                 y=counts,
+                 fill=daytime)) + theme_classic()
+
+base2 = base2 + labs(x="precint") # not needed in Python
+
+barDodge2= base2 +  scale_fill_brewer(palette = "Greys")
+barDodge2= barDodge2 + geom_bar(stat="identity",
+                            position="dodge", # DODGE
+                            color='grey')
+
+
+###################################################
+### code chunk number 14: barDodge2
+###################################################
+barDodge2
+
+
+###################################################
+### code chunk number 15: bivariate.Rnw:156-161
+###################################################
+barDodge2= barDodge2 + geom_text(aes(label=counts),
+                                 angle=0,
+                                 vjust=0,
+                                 hjust=0.5,
+                        position = position_dodge(width =0.9))
+
+
+###################################################
+### code chunk number 16: bivariate.Rnw:188-197
+###################################################
+base3= ggplot(data=PrecDaytiDF, 
+             aes(x=reorder(precint,-counts,FUN=max), #- counts
+                 y=counts,
+                 fill=daytime)) + theme_classic()
+base3 = base3 + labs(x="precint") # not needed in Python
+barStacked1 = base3 + scale_fill_brewer(palette = "Greys")
+barStacked1 = barStacked1 + geom_bar(stat = "identity",
+                              color='grey') # no position
+                                            # stack is default
+
+
+###################################################
+### code chunk number 17: barStacked1
+###################################################
+barStacked1
+
+
+###################################################
+### code chunk number 18: bivariate.Rnw:217-220
+###################################################
+# inversed copy
+PrecDaytiDF$daytime2 = factor(PrecDaytiDF$daytime, 
+                              levels = rev(levels(PrecDaytiDF$daytime)))
+
+
+###################################################
+### code chunk number 19: bivariate.Rnw:225-230
+###################################################
+base3= ggplot(data=PrecDaytiDF, 
+             aes(x=reorder(precint,-counts,FUN=max),
+                 y=counts,
+                 fill=daytime2)) + theme_classic()
+base3 = base3 + labs(x="precint") # not needed in Python
+
+
+###################################################
+### code chunk number 20: bivariate.Rnw:234-239
+###################################################
+barStacked2 = base3 + scale_fill_brewer(palette = "Greys",
+                                            direction = -1)
+# no changes here:
+barStacked2 = barStacked2 + geom_bar(stat = "identity",
+                                   color='grey')  
+
+
+###################################################
+### code chunk number 21: barStacked2
+###################################################
+barStacked2
+
+
+###################################################
+### code chunk number 22: bivariate.Rnw:259-264
+###################################################
+barStacked2b= barStacked2 + geom_text(aes(label=counts),
+                                     size = 3,
+                                     color='black',
+                           position = position_stack(vjust = 0.5))
+barStacked2b
+
+
+###################################################
+### code chunk number 23: barStacked2b
+###################################################
+barStacked2b
+
+
+###################################################
+### code chunk number 24: bivariate.Rnw:281-283
+###################################################
+# ad-hoc set of colors
+adHoc=c('white','white','black','black')
+
+
+###################################################
+### code chunk number 25: barStacked2_code
+###################################################
+# annotating with color (default color will be assigned)
+barStacked2c= barStacked2 + geom_text(aes(label=counts,
+                                          color=daytime2),
+                                      size = 3,
+                            position = position_stack(vjust = 0.5))
+# customized colors
+barStacked2c= barStacked2c + scale_colour_manual(values = adHoc) 
+# use this to avoid text over legend symbols
+barStacked2c= barStacked2c + guides(color=FALSE)
+
+
+###################################################
+### code chunk number 26: barStacked2c
+###################################################
+barStacked2c
+
+
+###################################################
+### code chunk number 27: bivariate.Rnw:344-345
+###################################################
+addmargins(PrecDayti_mgCol)
+
+
+###################################################
+### code chunk number 28: bivariate.Rnw:353-357
+###################################################
+base4=ggplot(data=PrecDaytiDF, 
+             aes(x=daytime, # changes in aes!
+                 y=pctCol,
+                 fill=precint)) + theme_classic()
+
+
+###################################################
+### code chunk number 29: bivariate.Rnw:363-365
+###################################################
+barStPct1= base4 + scale_fill_brewer(type='qual', #not needed
+                                     palette = 'Paired')
+
+
+###################################################
+### code chunk number 30: bivariate.Rnw:371-375
+###################################################
+barStPct1= barStPct1 + theme(axis.title.y = element_blank(),
+                             axis.text.y  = element_blank(),
+                             axis.line.y  = element_blank(),
+                             axis.ticks.y  = element_blank())
+
+
+###################################################
+### code chunk number 31: bivariate.Rnw:380-382
+###################################################
+barStPct1= barStPct1 +  geom_bar(stat = "identity",
+                             position="fill") # you need this
+
+
+###################################################
+### code chunk number 32: barStPct1
+###################################################
+barStPct1
+
+
+###################################################
+### code chunk number 33: bivariate.Rnw:401-407
+###################################################
+library(scales) # for labelling
+                                #label in % with ONE decimal position
+barStPct2= barStPct1 + geom_text(aes(label=percent(pctCol,
+                                               accuracy=0.1)),
+                                 size = 4, fontface='bold',
+                                 position = position_fill(vjust = 0.5))
+
+
+###################################################
+### code chunk number 34: bivariate.Rnw:421-423
+###################################################
+#contingency table of counts
+(CrimeDay=table(crime$crimecat,crime$OccurredDayTime))
+
+
+###################################################
+### code chunk number 35: bivariate.Rnw:429-444
+###################################################
+
+#marginal per column (column adds to 1)
+CrimeDay_mgCol=prop.table(CrimeDay,margin = 2)
+
+#making a data frame from contingency table
+CrimeDayDF=as.data.frame(CrimeDay)
+names(CrimeDayDF)=c("crime","daytime","counts")
+
+#adding marginal columns percents:
+CrimeDayDF$pctCol=as.data.frame(CrimeDay_mgCol)[,3]
+
+# reformatting ordinal data
+CrimeDayDF$daytime=factor(CrimeDayDF$daytime, 
+                          levels = RightOrder,
+                          ordered=TRUE)
+
+
+###################################################
+### code chunk number 36: BTablePlot_code
+###################################################
+# reorder table vertically by max count per daytime
+base5 = ggplot(CrimeDayDF, 
+               aes(x=daytime,
+                   y=reorder(crime, pctCol,FUN=max))) + theme_minimal()
+base5 = base5 + labs(y="crime") # not needed in Python
+
+# plot value as point, size by value of percent
+BTableDot = base5 + geom_point(aes(size = pctCol)) 
+
+# label points, label with 2 decimal positions (accuracy)
+# percent() need library "scale"
+BTableDot = BTableDot + geom_text(aes(label = percent(pctCol,
+                                                       accuracy = 0.01)),
+                                    # push text to the right
+                                    nudge_x = 0.4, 
+                                    size=3)
+# no need for legend
+BTableDot = BTableDot + theme(legend.position="none") 
+
+
+###################################################
+### code chunk number 37: BTableDot
+###################################################
+BTableDot
+
+
+###################################################
+### code chunk number 38: BTableBar1
+###################################################
+#crime ordered 
+base6  = ggplot(CrimeDayDF, 
+                 aes(x = reorder(crime,pctCol,FUN=max),
+                     y = pctCol) ) + theme_minimal()
+base6 = base6 + labs(x="crime") # not needed in Python
+
+#formatting text axis
+base6 = base6 + scale_y_continuous(labels = percent_format(accuracy = 1))
+
+#basic bar
+BTableBar = base6 + geom_bar( stat = "identity" )
+
+
+
+###################################################
+### code chunk number 39: BTableBar2
+###################################################
+#Facetting: one plot per 'daytime'
+BTableBar = BTableBar + facet_grid(.~daytime) 
+
+
+###################################################
+### code chunk number 40: BTableBar3
+###################################################
+#Flipping
+BTableBar= BTableBar + coord_flip() 
+
+
+###################################################
+### code chunk number 41: BTableBar4
+###################################################
+# altering axis text for crime
+BTableBar= BTableBar + theme(axis.text.y = element_text(size=8,
+                                                    angle = 45)) 
+# altering axis text for percent
+BTableBar= BTableBar + theme(axis.text.x = element_text(size=6,
+                                                    angle = 45)) 
+
+
+
+###################################################
+### code chunk number 42: BTableBar
+###################################################
+BTableBar
+
+
+###################################################
+### code chunk number 43: heat_code
+###################################################
+
+base7  = ggplot(CrimeDayDF, 
+                aes(x = daytime,
+                    y = reorder(crime, counts,FUN=max),
+                    fill = counts)) + theme_minimal()
+base7 = base7 + labs(y="crime") # not needed in Python
+
+# default heatplot
+heat1 = base7 +  geom_tile()
+
+# customizing color
+heat1 = heat1 +scale_fill_gradient(low = "gainsboro", 
+                                   high = "black")
+
+# moving legend to the top
+heat1 = heat1 + theme(legend.title = element_blank(),
+                      legend.position="top")
+# making legend colorbar wider
+heat1 = heat1 + guides(fill=guide_colorbar(barwidth=10))
+
+
+###################################################
+### code chunk number 44: heat1
+###################################################
+heat1
+
+
+###################################################
+### code chunk number 45: DaysToReport_summary
+###################################################
+summary(crime$DaysToReport)
+
+
+###################################################
+### code chunk number 46: bivariate.Rnw:619-621
+###################################################
+# counting crimes per year
+table(crime$year)
+
+
+###################################################
+### code chunk number 47: bivariate.Rnw:626-628
+###################################################
+# keeping years since 2008
+crime2=crime[crime$year>=2008,]
+
+
+###################################################
+### code chunk number 48: bivariate.Rnw:632-635
+###################################################
+# making data without missing values
+crime2=crime2[complete.cases(crime2$DaysToReport),]
+crime2$crimecat[is.na(crime2$crimecat)]='UNcategorized'
+
+
+###################################################
+### code chunk number 49: boxCrime_code
+###################################################
+base8 = ggplot(data=crime2,
+            aes(x=reorder(crimecat,DaysToReport,FUN=max),
+                y=DaysToReport))  + theme_minimal()
+base8= base8 + labs(x="crime") 
+
+boxCrime=base8 + geom_boxplot() + coord_flip()
+
+
+###################################################
+### code chunk number 50: boxCrime
+###################################################
+boxCrime
+
+
+###################################################
+### code chunk number 51: bivariate.Rnw:673-676
+###################################################
+# computing quartiles 2 and 3
+q23=function(x){quantile(x,probs = c(0.5,0.75))}
+aggregate(data=crime2,DaysToReport~crimecat,q23)
+
+
+###################################################
+### code chunk number 52: bivariate.Rnw:684-688
+###################################################
+#subsetting
+crimeYear=crime2[crime2$DaysToReport>=365,]
+#creating new variable
+crimeYear$YearsToReport=crimeYear$DaysToReport/365
+
+
+###################################################
+### code chunk number 53: boxCrimeY_code
+###################################################
+base9=ggplot(data=crimeYear,
+            aes(x=reorder(crimecat,YearsToReport,
+                          FUN=quantile,probs=0.75),
+                y=YearsToReport)) + theme_minimal()
+
+base9= base9 + labs(x="crime") 
+
+boxCrimeY=base9 + geom_boxplot() + coord_flip()
+
+
+###################################################
+### code chunk number 54: boxCrimeY
+###################################################
+boxCrimeY
+
+
+###################################################
+### code chunk number 55: bivariate.Rnw:731-734
+###################################################
+# ad-hoc q3
+q3=function(x){quantile(x,probs = 0.75)}
+theQ3='75%'## Labels for 'color'
+
+
+###################################################
+### code chunk number 56: bivariate.Rnw:738-743
+###################################################
+# line of q3 grouped using last base9
+q3Y = base9 + stat_summary(aes(group=T, color=theQ3),
+                               fun=q3,
+                               geom="line",
+                               size=4)
+
+
+###################################################
+### code chunk number 57: bivariate.Rnw:748-750
+###################################################
+#flipping 
+q3Y = q3Y + coord_flip()
+
+
+###################################################
+### code chunk number 58: q3Y
+###################################################
+q3Y
+
+
+###################################################
+### code chunk number 59: bivariate.Rnw:774-789
+###################################################
+# More labels for 'color'
+theMin='Minima'
+theMax='Maxima'
+
+#adding minima (group of minima):
+mq3Y =q3Y + stat_summary(aes(group=T, color=theMin),
+                         fun=min,
+                         geom="point",
+                         size=3)
+#
+#adding maxima (group of maxima):
+Mmq3Y=mq3Y + stat_summary(aes(group=T, color=theMax),
+                          fun=max,
+                          geom="point",
+                          size=1)
+
+
+###################################################
+### code chunk number 60: bivariate.Rnw:794-800
+###################################################
+#customizing legend and colors
+orderStats=c("Minima","75%","Maxima")
+cols_orderStats=c("grey80","grey50","black")
+Mmq3Yfin= Mmq3Y + scale_colour_manual(name='Stats',
+                                      limits = orderStats,
+                                      values = cols_orderStats)
+
+
+###################################################
+### code chunk number 61: Mmq3Yfin
+###################################################
+Mmq3Yfin
+
+
+###################################################
+### code chunk number 62: bivariate.Rnw:830-831
+###################################################
+str(crime2$OccurredDate)
+
+
+###################################################
+### code chunk number 63: bivariate.Rnw:836-840
+###################################################
+# frequency of events
+allCrimes=as.data.frame(table(crime2$OccurredDate))
+names(allCrimes)=c('dates','count')
+head(allCrimes)
+
+
+###################################################
+### code chunk number 64: bivariate.Rnw:844-849 (eval = FALSE)
+###################################################
+## baset=ggplot(allCrimes, aes(x=dates, y=count)) + theme_classic()
+## # line of time by count:
+## tsl=baset + geom_line(alpha=0.25) 
+## # result:
+## tsl
+
+
+###################################################
+### code chunk number 65: bivariate.Rnw:853-854
+###################################################
+str(allCrimes)
+
+
+###################################################
+### code chunk number 66: bivariate.Rnw:884-886
+###################################################
+#formatting date (respect the format found in text):
+allCrimes$dates=as.Date(allCrimes$dates,format="%Y-%m-%d")
+
+
+###################################################
+### code chunk number 67: bivariate.Rnw:890-891
+###################################################
+median(allCrimes$dates)
+
+
+###################################################
+### code chunk number 68: tsl_code
+###################################################
+baset = ggplot(allCrimes, 
+               aes(x=dates, # already a DATE
+                   y=count)) + theme_classic()
+
+# lines highly transparent:
+tsl=baset + geom_line(alpha=0.2) 
+
+
+###################################################
+### code chunk number 69: tsl
+###################################################
+tsl
+
+
+###################################################
+### code chunk number 70: tsp_base
+###################################################
+# Using previous dots with some transparency (same 'baset')
+tsp=baset + geom_point(alpha=0.2, #transparency
+                        shape=4) 
+
+
+###################################################
+### code chunk number 71: tsp_loess
+###################################################
+tsp=tsp +geom_smooth(fill='grey70', #color around line
+                     method = 'loess', # to compute line
+                     color='black') #color of line
+
+
+###################################################
+### code chunk number 72: tsp_format
+###################################################
+#add format to axis:
+tsp= tsp+scale_x_date(date_labels = "%b-%y", #how
+                      date_breaks = "6 months") #where
+
+#set up text values on each tick:
+tsp= tsp + theme(axis.text.x = element_text(angle=45,
+                                            vjust=0.5))
+
+
+###################################################
+### code chunk number 73: tsp
+###################################################
+tsp
+
+
+###################################################
+### code chunk number 74: bivariate.Rnw:974-982
+###################################################
+library(lubridate)
+library(magrittr)
+library(dplyr)
+
+weekCrimes=allCrimes %>% 
+            group_by(weekly=ceiling_date(dates, "week")) %>%
+              summarize(averages=mean(count)) %>% #create a variable
+                as.data.frame()
+
+
+###################################################
+### code chunk number 75: bivariate.Rnw:988-989
+###################################################
+str(weekCrimes)
+
+
+###################################################
+### code chunk number 76: tspW_code
+###################################################
+basetW = ggplot(weekCrimes,
+                aes(x=weekly, # formatted as DATE
+                   y=averages)) + theme_classic()
+tspW=basetW + geom_point(alpha=0.2, #transparency
+                         shape=4)
+
+tspW=tspW +geom_smooth(fill='grey70', #color around line
+                       method = 'loess', # to compute line
+                       color='black') #color of line
+#add format to axis:
+tspW=tspW+scale_x_date(date_labels = "%b-%y", #how
+                        date_breaks = "6 months") #where
+
+#set up text values on each tick:
+tspW=tspW + theme(axis.text.x = element_text(angle=45,
+                                              vjust=0.5))
+
+
+
+###################################################
+### code chunk number 77: tspW
+###################################################
+tspW
+
+
+###################################################
+### code chunk number 78: bivariate.Rnw:1044-1048
+###################################################
+# making table
+crimeDate=table(crime2$OccurredDate,crime2$crimecat)
+# seeing first ten counts of four crimes:
+crimeDate[1:10,1:4]
+
+
+###################################################
+### code chunk number 79: bivariate.Rnw:1054-1060
+###################################################
+#table of dates to data frame
+crimeDateDF=as.data.frame(crimeDate)
+#renaming columns
+names(crimeDateDF)=c("date",'crime','count')
+# formatting date column as Date type
+crimeDateDF$date=as.Date(crimeDateDF$date)
+
+
+###################################################
+### code chunk number 80: crimeDateDF_sub
+###################################################
+selection=c("AGGRAVATED ASSAULT", 'WEAPON')
+crimeDateDF_sub=crimeDateDF[crimeDateDF$crime %in% selection,]
+
+
+###################################################
+### code chunk number 81: datesrange
+###################################################
+mini = as.Date("2014/1/1")
+maxi = as.Date("2018/12/31")
+
+
+###################################################
+### code chunk number 82: tspSub_code
+###################################################
+basetSub = ggplot(crimeDateDF_sub,
+                  aes(x=date,y=count)) + theme_minimal()
+# all points for both crimes
+tspSub = basetSub + geom_point(alpha=0.3,
+                               shape=4,
+                               color='grey70')
+# loess lines for each crime
+tspSub = tspSub + geom_smooth(aes(color=crime),
+                              fill='white',size=2,
+                              method='loess',alpha=1)
+# color for each loess line
+tspSub = tspSub + scale_color_manual(values = c("grey", "black"))
+# format for dates on the horizontal
+tspSub = tspSub + scale_x_date(date_labels = "%b/%Y",
+                               date_breaks='2 months',
+                               limits = c(mini,maxi),
+                               expand=c(0,0)) # to look better!
+# Changing legend defaults and horizontal text default
+tspSub=tspSub+ theme(legend.title = element_blank(),
+                     legend.position="top",
+                     axis.text.x = element_text(angle=90,
+                                                vjust=1,
+                                                size=6))
+
+
+###################################################
+### code chunk number 83: tspSub
+###################################################
+tspSub
+
+
+###################################################
+### code chunk number 84: tsRidge_code
+###################################################
+baseTR = ggplot(allCrimes,
+                aes(x = count)) + theme_void()
+tsDens = baseTR + geom_density(fill='grey', color=NA)
+
+tsRidge= tsDens + facet_grid(year(dates)~.) #lubridate
+
+tsRidge= tsRidge + theme(axis.text.x   = element_text())
+
+
+###################################################
+### code chunk number 85: tsRidge
+###################################################
+tsRidge
+
+
+###################################################
+### code chunk number 86: bivariate.Rnw:1173-1177
+###################################################
+#subsetting the data:
+crime2015=crime[crime$year>=2015,]
+# keeping non missing
+crime2015=crime2015[complete.cases(crime2015),]
+
+
+###################################################
+### code chunk number 87: bivariate.Rnw:1187-1192
+###################################################
+num_num= crime2015%>%
+            group_by(Neighborhood) %>% 
+                summarise(meanDaysToReport=mean(DaysToReport),
+                          CrimeShare=length(Neighborhood))
+head(num_num)
+
+
+###################################################
+### code chunk number 88: bivariate.Rnw:1196-1200
+###################################################
+num_num=num_num%>%
+            mutate(CrimeShare=100*CrimeShare/sum(CrimeShare))
+#you get
+head(num_num)
+
+
+###################################################
+### code chunk number 89: scat1_code
+###################################################
+baseNN = ggplot(num_num, 
+                aes(x=meanDaysToReport,
+                    y=CrimeShare)) + theme_minimal()
+scat1 = baseNN +  geom_point(color='black') 
+
+
+###################################################
+### code chunk number 90: scat1
+###################################################
+scat1
+
+
+###################################################
+### code chunk number 91: bivariate.Rnw:1230-1240
+###################################################
+# coefficient
+corVal=cor.test(num_num$meanDaysToReport,
+                num_num$CrimeShare,method = 'spearman')$estimate
+# significance
+pVal=cor.test(num_num$meanDaysToReport,
+              num_num$CrimeShare,method = 'spearman')$p.value
+# rounding
+corVal=round(corVal,2); pVal=round(pVal,2);
+# building message
+TextCor=paste0('Spearman:\n',corVal,'\n(p.value:',pVal,')')
+
+
+###################################################
+### code chunk number 92: bivariate.Rnw:1248-1254
+###################################################
+scat2=scat1 + geom_smooth(method = lm,
+                          se=FALSE,
+                          color='grey60')
+scat2=scat2 + annotate(label=TextCor,
+                       geom = 'text',
+                       x=10,y=5)
+
+
+###################################################
+### code chunk number 93: scat2
+###################################################
+scat2
+
+
+###################################################
+### code chunk number 94: get_outliers
+###################################################
+#regression
+relationship=lm(CrimeShare~meanDaysToReport,data = num_num)
+#save cook distance in data frame
+num_num$cook=cooks.distance(relationship)
+#compute threshold
+threshold=4/nrow(num_num)
+
+
+###################################################
+### code chunk number 95: cookCondition
+###################################################
+# 'cond' will be the names of the neighborhood is 'cook'
+# is above the 'threshold'
+cond=ifelse(num_num$cook>threshold,
+            num_num$Neighborhood, "")
+
+
+###################################################
+### code chunk number 96: bivariate.Rnw:1308-1311
+###################################################
+library(ggrepel)
+scat3 = scat1 + geom_text_repel(aes(label=cond),
+                                color='grey50')
+
+
+###################################################
+### code chunk number 97: scat3
+###################################################
+scat3
+
+
+###################################################
+### code chunk number 98: TextHex
+###################################################
+# library(dplyr) for function "between"
+xVals=num_num$meanDaysToReport
+yVals=num_num$CrimeShare
+tVals=num_num$Neighborhood
+num_num$CondText=ifelse(between(xVals,3, 5) &
+                       between(yVals,1, 3),
+                       tVals,"")
+
+
+###################################################
+### code chunk number 99: bivariate.Rnw:1358-1361
+###################################################
+baseNN_Re = ggplot(num_num, 
+                aes(x=meanDaysToReport,
+                    y=CrimeShare)) + theme_minimal()
+
+
+###################################################
+### code chunk number 100: scatHex_code
+###################################################
+scatHex = baseNN_Re +  geom_hex(binwidth = 1)
+scatHex = scatHex + scale_fill_distiller(palette ="Greys",
+                                         direction=1) 
+
+
+###################################################
+### code chunk number 101: scatHex
+###################################################
+scatHex
+
+
+###################################################
+### code chunk number 102: scatHexAn_code
+###################################################
+
+#Zooming in:
+scatHexAn = scatHex + ylim(c(1,4)) + xlim(c(1.5,7))
+
+#Annotating:
+scatHexAn = scatHexAn + geom_label_repel(aes(label=CondText),
+                                         size=2.5,
+                                         color='grey50')
+
+
+###################################################
+### code chunk number 103: scatHexAn
+###################################################
+scatHexAn
+
+
+###################################################
+### code chunk number 104: scatDenAn_code
+###################################################
+#limits
+scatDenAn = baseNN_Re + ylim(c(1,4)) + xlim(c(1.5,7))
+#palette
+scatDenAn= scatDenAn + scale_fill_distiller(palette="Greys",
+                                            direction=1) 
+#2d density
+scatDenAn = scatDenAn +  stat_density_2d(aes(fill = ..density..),
+                                         geom = "raster",
+                                         contour = FALSE)
+#repelling text
+scatDenAn = scatDenAn + geom_label_repel(aes(label=CondText),
+                                       size=2,
+                                       color='grey50')
+#no legend
+scatDenAn = scatDenAn +  theme(legend.position='none') 
+
+
+###################################################
+### code chunk number 105: scatDenAn
+###################################################
+scatDenAn
+
+

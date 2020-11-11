@@ -1,0 +1,501 @@
+### R code from vignette source 'VisualizationBasics.Rnw'
+
+###################################################
+### code chunk number 1: VisualizationBasics.Rnw:36-39
+###################################################
+linkRepo="https://github.com/resourcesbookvisual/data/"
+linkDemo="raw/master/demo.rda" # "R data" file!
+load(url(paste0(linkRepo,linkDemo))) 
+
+
+###################################################
+### code chunk number 2: VisualizationBasics.Rnw:45-50
+###################################################
+# call plotting library
+library(ggplot2)
+
+# produce info: inform dataset, and variables to use
+info=ggplot(data=demo,aes(x=Continent))
+
+
+###################################################
+### code chunk number 3: VisualizationBasics.Rnw:54-56
+###################################################
+# add a particular geometry object with the info and create plot
+titles1=info + geom_bar()
+
+
+###################################################
+### code chunk number 4: titles1
+###################################################
+# show it:
+titles1
+
+
+###################################################
+### code chunk number 5: VisualizationBasics.Rnw:75-82
+###################################################
+# Titles to be used:
+the_Title="A NICE TITLE"
+the_SubTitle="A nice subtitle"
+
+# adding the titles:
+titles2=titles1 + ggtitle(label = the_Title,
+                          subtitle = the_SubTitle)
+
+
+###################################################
+### code chunk number 6: titles2
+###################################################
+# result
+titles2
+
+
+###################################################
+### code chunk number 7: VisualizationBasics.Rnw:102-108
+###################################################
+# Axes to be used:
+horizontalTitle="Continents present in the study"
+verticalTitle="Number of countries studied"
+
+# adding the axes titles:
+titles3=titles2 + xlab(horizontalTitle) + ylab(verticalTitle)
+
+
+###################################################
+### code chunk number 8: titles3
+###################################################
+# result
+titles3
+
+
+###################################################
+### code chunk number 9: VisualizationBasics.Rnw:128-133
+###################################################
+# Source to be used:
+theSource="Source: Democracy Index at Wikipedia"
+
+# adding the source:
+source=titles3 + labs(caption = theSource)
+
+
+###################################################
+### code chunk number 10: source
+###################################################
+# result
+source
+
+
+###################################################
+### code chunk number 11: VisualizationBasics.Rnw:156-165
+###################################################
+# data to input to ggplot layer:
+theCoordinates=list(X=5,Y=10)
+theMessage="So few?!"
+
+# adding annotation layer
+annot=source + annotate("text", 
+                        x = theCoordinates$X,
+                        y = theCoordinates$Y, 
+                        label = theMessage)
+
+
+###################################################
+### code chunk number 12: annotate
+###################################################
+# result
+annot
+
+
+###################################################
+### code chunk number 13: legend
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning,shape=Continent))
+leyenda=info + geom_point()
+
+# result
+leyenda
+
+
+###################################################
+### code chunk number 14: legend2
+###################################################
+# "none" or FALSE for 'no legend'
+leyenda + guides(shape = 'none', color=FALSE, size="none")
+
+
+###################################################
+### code chunk number 15: VisualizationBasics.Rnw:246-247 (eval = FALSE)
+###################################################
+## geom_point(shape=18)
+
+
+###################################################
+### code chunk number 16: lines1
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning))
+dots1=info + geom_point(shape="*", size=4)
+lines1=dots1 + geom_smooth(method = lm,se=FALSE,colour="black")
+
+# result
+lines1
+
+
+###################################################
+### code chunk number 17: lines2
+###################################################
+lines2=dots1 + geom_smooth(se=FALSE,size=3,colour="black")
+# result
+lines2
+
+
+###################################################
+### code chunk number 18: polyg1
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning,size=Regime))
+polyg1=info + geom_point(shape=23)
+# result
+polyg1 
+
+
+###################################################
+### code chunk number 19: colorNom1
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning,colour=Continent))
+colorNom1=info+geom_point(size=3) 
+colorNom1
+
+
+###################################################
+### code chunk number 20: colorOrd1
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning,
+                      color=as.integer(Regime)))
+colorOrd1=info+geom_point() 
+colorOrd1
+
+
+###################################################
+### code chunk number 21: colorNum1
+###################################################
+info=ggplot(demo, aes(x=Culture, y=Functioning,colour=Electoral))
+colorNum1=info+geom_point(size=3) 
+colorNum1
+
+
+###################################################
+### code chunk number 22: colorNom2
+###################################################
+colorNom2=colorNom1 + scale_colour_brewer(palette = "Set1")
+#result:
+colorNom2
+
+
+###################################################
+### code chunk number 23: colorOrd2
+###################################################
+info2=ggplot(demo, aes(x=Culture, y=Functioning,colour=Regime))
+colorOrd2=info2+geom_point(size=3)
+# direction -1 will show the scheme in the inverse order.
+colorOrd2 + scale_color_brewer(palette = "OrRd", direction = 1)
+
+
+###################################################
+### code chunk number 24: colorOrd3
+###################################################
+# fill in aes
+info3=ggplot(demo, aes(x=Culture, y=Functioning,fill=Regime))
+# shape > 20
+colorOrd3=info3+geom_point(size=3, shape=21)
+# differnt function
+colorOrd3 + scale_fill_brewer(palette = "OrRd")
+
+
+###################################################
+### code chunk number 25: colorNum2
+###################################################
+info4=ggplot(demo, aes(x=Culture, y=Functioning,fill=Electoral))
+colorNum=info4+geom_point(size=3, shape=21)
+# new function with midpoint
+colorNum2=colorNum + scale_fill_gradient2(midpoint = 5,
+                                          mid= 'white',
+                                          low = '#e66101',
+                                          high = '#5e3c99')
+# result
+colorNum2
+
+
+###################################################
+### code chunk number 26: VisualizationBasics.Rnw:488-492
+###################################################
+info4=ggplot(demo, aes(x=Culture, y=Functioning,fill=Electoral))
+colorNum=info4+geom_point(size=3, shape=21)
+# no midpoint
+colorNum + scale_fill_distiller(palette = "PuOr", direction = -1)
+
+
+###################################################
+### code chunk number 27: VisualizationBasics.Rnw:503-504
+###################################################
+colorBack1a=colorNum2 + theme_minimal()
+
+
+###################################################
+### code chunk number 28: colorBack1a
+###################################################
+colorBack1a + theme(panel.grid.major = element_line(size = 0.25, 
+                                                    colour = "black"), 
+                    panel.grid.minor = element_line(size = 0.15, 
+                                                    colour = "black")
+  )
+
+
+###################################################
+### code chunk number 29: VisualizationBasics.Rnw:525-526
+###################################################
+colorBack1a + theme(panel.grid.minor =   element_blank())
+
+
+###################################################
+### code chunk number 30: colorBack1a2
+###################################################
+colorBack1a + theme(panel.grid.major = element_line(size = 0.25, 
+                                                    colour = "black"), 
+                    panel.grid.minor =  element_blank()
+  )
+
+
+###################################################
+### code chunk number 31: VisualizationBasics.Rnw:547-548
+###################################################
+colorBack1b=colorNum2 + theme_classic()
+
+
+###################################################
+### code chunk number 32: colorBack1b
+###################################################
+colorBack1b
+
+
+###################################################
+### code chunk number 33: VisualizationBasics.Rnw:564-565
+###################################################
+colorBack1b + theme(axis.line = element_blank())
+
+
+###################################################
+### code chunk number 34: VisualizationBasics.Rnw:570-572
+###################################################
+library(ggthemes)
+colorBack2a = colorNum2 + theme_tufte()
+
+
+###################################################
+### code chunk number 35: colorBack2a
+###################################################
+colorBack2a
+
+
+###################################################
+### code chunk number 36: VisualizationBasics.Rnw:598-605
+###################################################
+# changes to border lines:
+newBorders=element_rect(colour = "black",size = 2)
+
+# highlighting borders :
+margins1= leyenda + theme(panel.background = newBorders,
+                          plot.background = newBorders,
+                          legend.background = newBorders)
+
+
+###################################################
+### code chunk number 37: margin
+###################################################
+margins1
+
+
+###################################################
+### code chunk number 38: VisualizationBasics.Rnw:623-627
+###################################################
+# new info: 
+newMargins=margin(3, 3, 3, 3, "cm") #top, right,bottom, left
+#changing:
+margins2= margins1 + theme(plot.margin = newMargins)
+
+
+###################################################
+### code chunk number 39: marginnew
+###################################################
+margins2
+
+
+###################################################
+### code chunk number 40: VisualizationBasics.Rnw:649-653
+###################################################
+erase1= source + theme_classic() +
+                 theme(axis.title.x = element_blank(),
+                       axis.line.x = element_blank(),
+                       axis.ticks.x = element_blank())
+
+
+###################################################
+### code chunk number 41: erase1
+###################################################
+erase1
+
+
+###################################################
+### code chunk number 42: VisualizationBasics.Rnw:672-674
+###################################################
+erase2 = leyenda + theme_classic() +
+                   theme(legend.title = element_blank())
+
+
+###################################################
+### code chunk number 43: erase2
+###################################################
+erase2
+
+
+###################################################
+### code chunk number 44: VisualizationBasics.Rnw:695-701
+###################################################
+ali1= erase1 + theme(plot.title = element_text(hjust = 0.5),
+                     plot.subtitle = element_text(hjust = 0.5),
+                     plot.caption = element_text(hjust = 0),
+                     axis.title.y = element_text(hjust = 1))
+# categorical labels alignment correction!!
+ali1= ali1 + theme(axis.text.x = element_text(vjust = 7))
+
+
+###################################################
+### code chunk number 45: ali1
+###################################################
+ali1
+
+
+###################################################
+### code chunk number 46: VisualizationBasics.Rnw:720-729
+###################################################
+ValuesAndCounts=table(demo$Continent)
+values=names(ValuesAndCounts)
+counts=as.vector(ValuesAndCounts)
+FT=data.frame(Values=values,Counts=counts)
+# ordering FreqTable by ascending counts
+FT=FT[order(FT$Counts),]
+row.names(FT)=NULL # resetting row names
+# here it is:
+print(FT, row.names = F)
+
+
+###################################################
+### code chunk number 47: VisualizationBasics.Rnw:734-737
+###################################################
+info=ggplot(data=FT, aes(x=Values,y=Counts))
+barFT1= info + geom_bar(stat = 'identity') 
+barFT2= barFT1 + theme_classic()
+
+
+###################################################
+### code chunk number 48: VisualizationBasics.Rnw:743-748
+###################################################
+barFT3 = barFT2 + theme(axis.title.x = element_blank(),
+                        axis.line.x = element_blank(),
+                        axis.ticks.x = element_blank(),
+                        axis.ticks.y = element_blank(),
+                        axis.text.x = element_text(vjust = 5))
+
+
+###################################################
+### code chunk number 49: VisualizationBasics.Rnw:753-754
+###################################################
+barFT4 = barFT3 + scale_x_discrete(limits=FT$Values)
+
+
+###################################################
+### code chunk number 50: barFT4
+###################################################
+barFT4
+
+
+###################################################
+### code chunk number 51: VisualizationBasics.Rnw:771-775
+###################################################
+barFT4 + geom_text(aes(label=Counts), 
+                   vjust=1.6, # manual alignment
+                   color="white", size=3.5) +
+         theme(axis.text.y = element_blank())
+
+
+###################################################
+### code chunk number 52: barFT4a
+###################################################
+barFT4 + geom_text(aes(label=Counts), 
+                   vjust=1.6, # manual alignment
+                   color="white", size=3.5) +
+         theme(axis.text.y = element_blank())
+
+
+###################################################
+### code chunk number 53: VisualizationBasics.Rnw:796-798
+###################################################
+barFT4 + theme(panel.grid.major.y = element_line(color = "grey60")) + 
+         scale_y_discrete(limits=FT$Counts)
+
+
+###################################################
+### code chunk number 54: barFT4b
+###################################################
+barFT4 + theme(panel.grid.major.y = element_line(color = "grey60")) + 
+         scale_y_discrete(limits=FT$Counts)
+
+
+###################################################
+### code chunk number 55: VisualizationBasics.Rnw:817-819
+###################################################
+repo1 = erase2 + theme(legend.position="top")
+# you can try "bottom", too.
+
+
+###################################################
+### code chunk number 56: repo1
+###################################################
+repo1
+
+
+###################################################
+### code chunk number 57: VisualizationBasics.Rnw:842-847
+###################################################
+repo2 = repo1 + 
+        # One unit same length in both axes
+        coord_fixed(ratio=1) + 
+        # less space
+        guides(shape=guide_legend(nrow = 1))
+
+
+###################################################
+### code chunk number 58: repo2
+###################################################
+repo2 
+
+
+###################################################
+### code chunk number 59: VisualizationBasics.Rnw:863-869
+###################################################
+repo2 + theme(#legend elements no too far from each other
+              legend.key.width = unit(0, 'lines'),
+              # frame the legend
+              legend.background = element_rect(size=0.5,
+                                       linetype="solid",
+                                       colour ="grey"))
+
+
+###################################################
+### code chunk number 60: repo2b
+###################################################
+repo2 + theme(legend.key.width = unit(0, 'lines'),
+              legend.background = element_rect(size=0.5,
+                                       linetype="solid",
+                                       colour ="grey"))
+
+

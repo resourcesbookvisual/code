@@ -1,0 +1,688 @@
+### R code from vignette source 'network.Rnw'
+
+###################################################
+### code chunk number 1: network.Rnw:24-38 (eval = FALSE)
+###################################################
+## library(rtweet)
+## 
+## # your credential in quotations:
+## api_key = "write__yours__here"
+## api_secret_key = "write__yours__here"
+## access_token = "write__yours__here"
+## access_token_secret = "write__yours__here"
+## 
+## # creating the token (this creates a file in your computer)
+## token = create_token(app = "bookVisual",
+##                       consumer_key = api_key,
+##                       consumer_secret = api_secret_key,
+##                       access_token = access_token,
+##                       access_secret = access_token_secret,)
+
+
+###################################################
+### code chunk number 2: network.Rnw:50-59
+###################################################
+link1="https://github.com/resourcesbookvisual/data"
+link2="/raw/master/PresidentsTwitter.xlsx"
+LINK=paste0(link1,link2)
+
+library(rio)
+twusers=import(LINK)
+
+# check first two columns
+head(twusers[,c(1,2)])
+
+
+###################################################
+### code chunk number 3: network.Rnw:74-76 (eval = FALSE)
+###################################################
+## library(rtweet)
+## trumpTweets = get_timeline("realDonaldTrump", n = 2)
+
+
+###################################################
+### code chunk number 4: network.Rnw:81-88 (eval = FALSE)
+###################################################
+## selection=c("created_at",
+##             "text",
+##             "is_retweet",
+##             "favorite_count",
+##             "retweet_count")
+## 
+## trumpDF=as.data.frame(trumpTweets[,selection])
+
+
+###################################################
+### code chunk number 5: network.Rnw:93-100 (eval = FALSE)
+###################################################
+## library(lubridate)
+## 
+## trumpDF$Date=date(trumpDF$created_at)
+## trumpDF$Hour=hour(trumpDF$created_at)
+## trumpDF$Day=wday(trumpDF$created_at)
+## #saving the selected info:
+## write.csv(trumpDF,"trumps.csv",row.names = F)
+
+
+###################################################
+### code chunk number 6: network.Rnw:119-125
+###################################################
+link3="/raw/master/trumps.csv"
+trumpLink=paste0(link1,link3)
+allTweets=read.csv(trumpLink,stringsAsFactors = F)
+
+DTtweets=allTweets[allTweets$is_retweet==FALSE,] #no retweets
+row.names(DTtweets)=NULL
+
+
+###################################################
+### code chunk number 7: network.Rnw:135-136
+###################################################
+DTtweets$text[49]
+
+
+###################################################
+### code chunk number 8: network.Rnw:145-146
+###################################################
+DTtweets$text=gsub("[^\x01-\x7F]", "", DTtweets$text)
+
+
+###################################################
+### code chunk number 9: network.Rnw:153-154
+###################################################
+DTtweets$text=gsub("http\\S+\\s*","",  DTtweets$text)
+
+
+###################################################
+### code chunk number 10: network.Rnw:158-160
+###################################################
+DTtweets$text=gsub("&amp;", "and", DTtweets$text) #replaced
+DTtweets$text=gsub("&lt;|&gt;", "", DTtweets$text) #eliminated
+
+
+###################################################
+### code chunk number 11: network.Rnw:168-169 (eval = FALSE)
+###################################################
+## DTtweets$text=gsub("@\\w+", "", DTtweets$text)
+
+
+###################################################
+### code chunk number 12: network.Rnw:172-173 (eval = FALSE)
+###################################################
+## DTtweets$text=gsub("#\\w+", "", DTtweets$text)
+
+
+###################################################
+### code chunk number 13: network.Rnw:194-204
+###################################################
+library(tidytext)
+library(magrittr)
+
+DTtweets_Words = DTtweets %>% 
+                unnest_tokens(output=EachWord, # for DTtweets_Words
+                                input=text,    # from DTtweets
+                                token="words") # for tokenization
+
+# result
+head(DTtweets_Words[,-c(1,2)],10)
+
+
+###################################################
+### code chunk number 14: network.Rnw:221-226
+###################################################
+# calling the file
+data(stop_words) 
+
+# seeing some rows
+head(stop_words)
+
+
+###################################################
+### code chunk number 15: network.Rnw:231-238
+###################################################
+library(dplyr)
+
+# The column 'word' from 'stop_words' will be compared
+# to the column 'EachWord' in 'DTtweets_Words'
+DTtweets_Words = DTtweets_Words %>%
+  anti_join(stop_words,
+            by = c("EachWord" = "word"))
+
+
+###################################################
+### code chunk number 16: network.Rnw:242-244
+###################################################
+FTtrump = DTtweets_Words %>%
+  dplyr::count(EachWord, sort = TRUE) 
+
+
+###################################################
+### code chunk number 17: network.Rnw:248-249
+###################################################
+head(FTtrump)
+
+
+###################################################
+### code chunk number 18: network.Rnw:264-266 (eval = FALSE)
+###################################################
+## library(devtools) # needed for "install_github()"
+## install_github("lchiffon/wordcloud2")
+
+
+###################################################
+### code chunk number 19: network.Rnw:271-282
+###################################################
+library(wordcloud2)
+# option for shape are: 
+# cardioid,diamond,triangle-forward,triangle,pentagon or star.
+
+wc1=wordcloud2(data=FTtrump,
+              size=1,
+              minSize = 0,
+              fontFamily = 'Arial',
+              color='random-light',
+              backgroundColor = "white",
+              shape = 'circle')
+
+
+###################################################
+### code chunk number 20: network.Rnw:287-293
+###################################################
+library(htmlwidgets)
+saveWidget(widget=wc1,file="wc1.html",selfcontained = F)
+library(webshot)
+webshot(url="wc1.html",
+        file="figures/wc1.pdf", # change the location?
+        delay =6) 
+
+
+###################################################
+### code chunk number 21: network.Rnw:306-309 (eval = FALSE)
+###################################################
+## # save it in html
+## library(htmlwidgets)
+## saveWidget(widget=wc1,file="wc1.html",selfcontained = F)
+
+
+###################################################
+### code chunk number 22: network.Rnw:314-315 (eval = FALSE)
+###################################################
+## library(webshot)
+
+
+###################################################
+### code chunk number 23: network.Rnw:320-321 (eval = FALSE)
+###################################################
+## #webshot::install_phantomjs()
+
+
+###################################################
+### code chunk number 24: network.Rnw:326-329 (eval = FALSE)
+###################################################
+## webshot(url="wc1.html",
+##         file="figures/wc1.pdf", # change the location?
+##         delay =6) 
+
+
+###################################################
+### code chunk number 25: network.Rnw:347-359
+###################################################
+library(RColorBrewer)
+
+#subsetting
+FTsub=FTtrump[FTtrump$n>4,]
+colorQuant = length(unique(FTsub$n))
+
+#new colors
+newColors=brewer.pal(9,"Reds")
+palette = colorRampPalette(newColors)(colorQuant)[FTsub$n]
+
+#new version
+wc2=wordcloud2(FTsub, color=palette)
+
+
+###################################################
+### code chunk number 26: network.Rnw:362-366
+###################################################
+saveWidget(widget=wc2,file="wc2.html",selfcontained = F)
+
+webshot(url="wc2.html",file="figures/wc2.pdf",delay =5)
+
+
+
+###################################################
+### code chunk number 27: network.Rnw:403-407
+###################################################
+DTtweets_2g = DTtweets %>%
+                unnest_tokens(output=pairWords, 
+                              input=text, 
+                              token = "ngrams", n = 2) # 2-grams
+
+
+###################################################
+### code chunk number 28: network.Rnw:412-413
+###################################################
+head(DTtweets_2g$pairWords)
+
+
+###################################################
+### code chunk number 29: network.Rnw:429-436
+###################################################
+library(tidyr)
+DTtweets_2g_only=DTtweets_2g %>%
+              separate(pairWords, #source column
+                       c("word1", "word2"), #new columns
+                       sep = " ") %>% # split by
+                select(c("word1", "word2")) # keep these
+
+
+
+###################################################
+### code chunk number 30: network.Rnw:443-447
+###################################################
+FT_DT_2g = DTtweets_2g_only %>%
+            dplyr::count(word1, word2, sort = TRUE)
+#take a look
+head(FT_DT_2g)
+
+
+###################################################
+### code chunk number 31: network.Rnw:454-455
+###################################################
+FT_DT_2g=FT_DT_2g[complete.cases(FT_DT_2g),]
+
+
+###################################################
+### code chunk number 32: network.Rnw:460-463
+###################################################
+FT_DT_2g = FT_DT_2g %>%
+                filter(!word1 %in% stop_words$word) %>%
+                filter(!word2 %in% stop_words$word)
+
+
+###################################################
+### code chunk number 33: network.Rnw:483-486
+###################################################
+library(igraph)
+
+DT_2g_net=graph_from_data_frame(FT_DT_2g)
+
+
+###################################################
+### code chunk number 34: network.Rnw:491-504
+###################################################
+library(ggraph)
+
+# graph layout: 'ggraph' will decide this time
+layout = ggraph(DT_2g_net) + theme_void()
+# draw nodes (words) in a position based on layout
+nodes= layout + geom_node_point()
+# draw liks to connect nodes
+net1 = nodes + geom_edge_link()
+# customize some text in node
+net1= net1+ geom_node_text(aes(label = name), 
+                                 vjust = 1,
+                                 hjust = 1,
+                                 size=2)
+
+
+###################################################
+### code chunk number 35: net1
+###################################################
+net1
+
+
+###################################################
+### code chunk number 36: network.Rnw:535-547
+###################################################
+#subsetting
+FT_DT_2g3=FT_DT_2g[FT_DT_2g$n>=3,]
+DT_2g_net_sub=graph_from_data_frame(FT_DT_2g3)
+
+#new plot
+layout2 = ggraph(DT_2g_net_sub) + theme_void()
+nodes =layout2 +  geom_node_point()
+net2 = nodes +  geom_edge_link()
+net2 = net2 +  geom_node_text(aes(label = name), 
+                              vjust = -0.5, 
+                              hjust = 0.5,angle=30, 
+                              size=3)
+
+
+###################################################
+### code chunk number 37: net2
+###################################################
+net2
+
+
+###################################################
+### code chunk number 38: network.Rnw:595-596 (eval = FALSE)
+###################################################
+## relationship= lookup_friendships(source='user1',target='user2')
+
+
+###################################################
+### code chunk number 39: network.Rnw:603-604 (eval = FALSE)
+###################################################
+## pairs=combn(twusers$twitter,2,simplify = F)
+
+
+###################################################
+### code chunk number 40: network.Rnw:608-632 (eval = FALSE)
+###################################################
+## # library(rtweet)
+## # library(tidyr)
+## # test=c("jairbolsonaro" ,"sebastianpinera" ,"MartinVizcarraC")
+## # pairs=combn(test,2,simplify = F)
+## # 
+## # nodes=data.frame()
+## # 
+## # for (pair in pairs){
+## # 
+## #   relation = lookup_friendships(
+## #   source = "jairbolsonaro",
+## #   target = "MartinVizcarraC")
+## # 
+## #   node=reshape::cast(relation,
+## #                      relationship + user~ variable,
+## #                      value.var="value")[1,c(4,5)]
+## # 
+## # 
+## #   node$source=pair[1]
+## #   node$target=pair[2]
+## #   nodes=rbind(nodes,node)
+## # 
+## # }
+## #write.csv(nodes,"relationships.csv",row.names = F)
+
+
+###################################################
+### code chunk number 41: network.Rnw:636-657 (eval = FALSE)
+###################################################
+## # library(tidyr)
+## # pairs=combn(twusers$twitter,2,simplify = F)
+## # nodes=data.frame()
+## # 
+## # for (pair in pairs[[150]]){
+## #   relation = lookup_friendships(source = pair[1],target = pair[2])
+## # 
+## #   node=reshape::cast(relation,relationship + user~ variable,
+## #                      value.var="value")[1,c(4,5)]
+## #   node$source=pair[1]
+## #   node$target=pair[2]
+## #   nodes=rbind(nodes,node)
+## # }
+## # g1=nodes[nodes$following==T & nodes$followed_by==F,c("source","target")]
+## # g2=nodes[nodes$following==T & nodes$followed_by==T,c("source","target")]
+## # g3=nodes[nodes$following==F & nodes$followed_by==T,c("target","source")]
+## # g4=g2[,c(2,1)]
+## # names(g3)=names(g4)=names(g1)
+## # edge=rbind(g1,g2,g3,g4)
+## # row.names(edge)=NULL
+## # edges=read.csv("nod")
+
+
+###################################################
+### code chunk number 42: network.Rnw:662-666
+###################################################
+link4="/raw/master/edgesAmericas.csv"
+linkEdges=paste0(link1,link4)
+relationships=read.csv(linkEdges,stringsAsFactors = F)
+head(relationships)
+
+
+###################################################
+### code chunk number 43: network.Rnw:671-676
+###################################################
+library(igraph)
+set.seed(123)
+net = graph_from_data_frame(d=relationships, #data frame
+                             vertices=twusers,#data frame 
+                             directed=T)
+
+
+###################################################
+### code chunk number 44: network.Rnw:681-682
+###################################################
+summary(net)
+
+
+###################################################
+### code chunk number 45: do-netPresi
+###################################################
+library(ggraph)
+
+layoutPresi = ggraph(net) + theme_void()
+nodesPresi= layoutPresi + geom_node_point()
+netPresi = nodesPresi + geom_edge_link()
+netPresi= netPresi+ geom_node_text(aes(label = name))
+
+
+###################################################
+### code chunk number 46: netPresi
+###################################################
+netPresi
+
+
+###################################################
+### code chunk number 47: netPresi2-code
+###################################################
+nodesPresi2= layoutPresi + geom_node_point(aes(colour=region))
+netPresi2= nodesPresi2 + geom_edge_link(color='grey90') 
+netPresi2=netPresi2+ geom_node_text(aes(label = president), 
+                                    size=3, 
+                                    color="gray50", 
+                                    repel=T)
+
+netPresi2=netPresi2 + scale_color_brewer(name="Region",
+                                        type = 'qual',
+                                        palette ="Set1")
+
+
+###################################################
+### code chunk number 48: netPresi2
+###################################################
+netPresi2
+
+
+###################################################
+### code chunk number 49: network.Rnw:788-799
+###################################################
+# measure of being followed
+indeg = degree(net, mode="in",normalized = T)
+V(net)$indegree = indeg
+
+# measure of being a follower
+outdeg = degree(net, mode="out",normalized = T)
+V(net)$outdegree = outdeg
+
+# reloading the network (new attributes)
+layoutPresi=ggraph(net) + theme_void()
+
+
+
+###################################################
+### code chunk number 50: sizeNodesIn_code
+###################################################
+sizeNodesIn=layoutPresi + geom_edge_link(color='grey90') 
+sizeNodesIn=sizeNodesIn + geom_node_point(aes(size=(1+indegree)^10,
+                                              color=region))
+sizeNodesIn=sizeNodesIn + geom_node_text(aes(label = president),
+                                         color="gray50",
+                                         repel=T)
+sizeNodesIn=sizeNodesIn + scale_color_brewer(name="Region",
+                                             type = 'qual',
+                                             palette ="Set1")
+
+
+###################################################
+### code chunk number 51: sizeNodesIn
+###################################################
+sizeNodesIn
+
+
+###################################################
+### code chunk number 52: network.Rnw:845-856
+###################################################
+nodesPresiIn=layoutPresi + geom_node_point(aes(color=region))
+netPresiIn=nodesPresiIn + geom_edge_link(color='grey90') 
+netPresiIn=netPresiIn + geom_node_text(aes(label=country,
+                                           size=(1+indegree)^10),
+                                       color="gray50", 
+                                       repel=T)
+
+netPresiIn=netPresiIn + scale_color_brewer(name="Region",
+                                           type = 'qual',
+                                           palette ="Set1")
+netPresiIn=netPresiIn + guides(size=F) #NO legend for size
+
+
+###################################################
+### code chunk number 53: netPresiIn
+###################################################
+netPresiIn
+
+
+###################################################
+### code chunk number 54: network.Rnw:872-883
+###################################################
+netPresiOut=layoutPresi + geom_node_point(aes(color=region))
+netPresiOut=netPresiOut + geom_edge_link(color='grey90') 
+netPresiOut=netPresiOut + geom_node_text(aes(label = country,
+                                                 size=(1+outdegree)^10),
+                                             color="gray50", 
+                                             repel=T)
+
+netPresiOut=netPresiOut + scale_color_brewer(name="Region",
+                                                 type = 'qual',
+                                                 palette ="Set1")
+netPresiOut=netPresiOut + guides(size=F) #NO legend for size
+
+
+###################################################
+### code chunk number 55: netPresiOut
+###################################################
+netPresiOut
+
+
+###################################################
+### code chunk number 56: bye_directed
+###################################################
+unet <- as.undirected(net, mode="mutual")
+
+
+###################################################
+### code chunk number 57: bye_isolates
+###################################################
+unet=delete.vertices(graph=unet, #input
+                     v=which(degree(unet)==0))#what to remove
+
+
+###################################################
+### code chunk number 58: network.Rnw:931-936
+###################################################
+modularityResult = cluster_fast_greedy(unet)
+# creating a new node attribute
+V(unet)$modCommunity = as.character(modularityResult$membership)
+# you get:
+V(unet)$modCommunity
+
+
+###################################################
+### code chunk number 59: network.Rnw:941-959
+###################################################
+#layout
+layoutModu=ggraph(unet, layout="graphopt") + theme_void()
+#links
+moduLinks=layoutModu + geom_edge_link()
+#points
+moduNodes=moduLinks + geom_node_point(aes(colour=modCommunity),
+                                        size=5)
+#labels
+moduText=moduNodes+ geom_node_text(aes(label = name),
+                                       size=3,
+                                       color="black",
+                                       repel=T,
+                                       check_overlap = T)
+#final details
+moduVisual=moduText+scale_color_brewer(name="Community Detected",
+                                          type = 'qual',
+                                          palette ="Set1")
+moduVisual=moduVisual + guides(color=FALSE)
+
+
+###################################################
+### code chunk number 60: moduVisual
+###################################################
+moduVisual
+
+
+###################################################
+### code chunk number 61: network.Rnw:993-1013
+###################################################
+louvainResult = cluster_louvain(unet)
+# creating a new node attribute
+V(unet)$louvainCommunity = as.character(louvainResult$membership)
+
+# as before:
+layoutLouv=ggraph(unet, layout="graphopt") + theme_void()
+louvLinks=layoutLouv + geom_edge_link()
+louvNodes=louvLinks + geom_node_point(aes(colour=louvainCommunity),
+                                       size=5)
+louvLabels=louvNodes+ geom_node_text(aes(label = name),
+                                      size=3,
+                                      color="black",
+                                      repel=T,
+                                      check_overlap = T)
+louvVisual=louvLabels+scale_color_brewer(name="Community Detected",
+                                         type = 'qual',
+                                         palette ="Set1")
+
+louvVisual=louvVisual + guides(color=FALSE)
+
+
+
+###################################################
+### code chunk number 62: louvVisual
+###################################################
+louvVisual
+
+
+###################################################
+### code chunk number 63: network.Rnw:1034-1037 (eval = FALSE)
+###################################################
+## #We could do some evaluation:
+## modularity(unet,membership(modularityResult))
+## modularity(unet,membership(louvainResult))
+
+
+###################################################
+### code chunk number 64: network.Rnw:1043-1062
+###################################################
+infomapResult = cluster_infomap(net)
+# creating a new node attribute
+V(net)$infmpCommunity = as.character(infomapResult$membership)
+
+layoutInfmp=ggraph(net, layout="graphopt") + theme_void()
+infmpLinks=layoutInfmp + geom_edge_link()
+infmpNodes=infmpLinks + geom_node_point(aes(colour=infmpCommunity),
+                                       size=5)
+infmpLabels=infmpNodes+ geom_node_text(aes(label = name),
+                                        size=3,
+                                        color="black",
+                                        repel=T,
+                                        check_overlap = T)
+infmpVisual=infmpLabels+scale_color_brewer(name="Community Detected",
+                                           type = 'qual',
+                                           palette ="Set1")
+
+infmpVisual=infmpVisual + guides(color=FALSE)
+
+
+
+###################################################
+### code chunk number 65: infmpVisual
+###################################################
+infmpVisual
+
+

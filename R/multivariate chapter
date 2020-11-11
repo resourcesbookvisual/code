@@ -1,0 +1,418 @@
+### R code from vignette source 'multivariate.Rnw'
+
+###################################################
+### code chunk number 1: multivariate.Rnw:16-32
+###################################################
+# opening file
+linkRepo='https://github.com/resourcesbookvisual/data/'
+linkCRI='raw/master/crime.csv'
+fullLink=paste0(linkRepo,linkCRI)
+crime=read.csv(fullLink,stringsAsFactors = F)
+crime2=crime[crime$year>=2008,]
+# making data without missing values
+crime2=crime2[complete.cases(crime2$DaysToReport),]
+crime2$crimecat[is.na(crime2$crimecat)]='UNcategorized'
+#table of dates to data frame
+crimeDate=table(crime2$OccurredDate,crime2$crimecat)
+crimeDateDF=as.data.frame(crimeDate)
+#renaming columns
+names(crimeDateDF)=c("date",'crime','count')
+# formatting date column as Date type
+crimeDateDF$date=as.Date(crimeDateDF$date)
+
+
+###################################################
+### code chunk number 2: tspF_code
+###################################################
+library(ggplot2)
+#base
+basetF = ggplot(crimeDateDF,
+                aes(x=date,
+                    y=count)) + theme_classic()
+#points
+tspF = basetF + geom_point(alpha=0.1,shape=4)
+
+tspF = tspF + geom_smooth(fill='grey90',
+                          method = 'loess',
+                          color='white')
+
+# format for horizontal text
+
+tspF = tspF + scale_x_date(date_labels = "%Y",
+                           date_breaks='2 years')
+tspF = tspF + theme(axis.text.x  = element_text(angle=90,
+                                                size=7),
+                    axis.text.y  = element_text(size=7),
+                    strip.text = element_text(size = 8))
+
+# facetting
+tspF1 = tspF + facet_wrap(.~reorder(crime,-count),
+                         ncol=4,
+                         scales = "free_y")
+
+
+
+###################################################
+### code chunk number 3: tspF1
+###################################################
+tspF1
+
+
+###################################################
+### code chunk number 4: tspF2_code
+###################################################
+# facetting
+tspF2 = tspF + facet_wrap(.~reorder(crime,-count),
+                         ncol=4)
+
+
+###################################################
+### code chunk number 5: tspF2
+###################################################
+#tspF2
+
+
+###################################################
+### code chunk number 6: safeData
+###################################################
+linkRepo='https://github.com/resourcesbookvisual/data'
+linkCRI='/raw/master/safeCitiesIndexAll.csv'
+fullLink=paste0(linkRepo,linkCRI)
+safe=read.csv(fullLink,stringsAsFactors = FALSE)
+
+
+###################################################
+### code chunk number 7: multivariate.Rnw:140-141
+###################################################
+names(safe)
+
+
+###################################################
+### code chunk number 8: multivariate.Rnw:148-150
+###################################################
+#just four columns out of fifty
+head(safe[,c(1:4)])
+
+
+###################################################
+### code chunk number 9: multivariate.Rnw:156-161
+###################################################
+library(reshape)
+
+safeAllLong=melt(safe, # all the data
+                 id.vars = 'city') #identifier
+head(safeAllLong)
+
+
+###################################################
+### code chunk number 10: multivariate.Rnw:166-167
+###################################################
+str(safeAllLong,width = 65,strict.width='cut')
+
+
+###################################################
+### code chunk number 11: multivariate.Rnw:176-180
+###################################################
+# "grep" will find coincidences and return positions
+positionsIN=grep("_In_", safeAllLong$variable)
+# using those positions to subset
+safeIN=safeAllLong[positionsIN,]
+
+
+###################################################
+### code chunk number 12: multivariate.Rnw:189-191
+###################################################
+# the same amount of variables
+length(levels(safeIN$variable))
+
+
+###################################################
+### code chunk number 13: multivariate.Rnw:196-199
+###################################################
+safeIN$variable=droplevels(safeIN$variable)
+# or
+safeIN$variable=as.character(safeIN$variable)
+
+
+###################################################
+### code chunk number 14: heat1_code
+###################################################
+library(ggplot2)
+base = ggplot(data = safeIN, aes(x = variable,
+                                 y = city))
+heat1 = base +  geom_tile(aes(fill = value))
+
+
+###################################################
+### code chunk number 15: heat1
+###################################################
+heat1
+
+
+###################################################
+### code chunk number 16: reorder_code1
+###################################################
+library(magrittr)
+library(dplyr)
+#median per index (variable)
+medVar=safeIN %>%
+    group_by(variable) %>%
+      summarize(the50=median(value))
+
+# varSorted has the indexes sorted
+varSorted=medVar%>%
+    arrange(the50)%>%as.data.frame()%>%
+    .$variable%>%as.character()
+
+
+###################################################
+### code chunk number 17: reorder_code2
+###################################################
+#median per city
+medCity=safeIN %>%
+    group_by(city) %>%
+      summarize(the50=median(value))
+
+# citySorted has the cities sorted
+citySorted=medCity%>%
+    arrange(the50)%>%as.data.frame()%>%
+    .$city%>%as.character()
+
+
+###################################################
+### code chunk number 18: multivariate.Rnw:267-270
+###################################################
+library(stringr)
+#splitting each text, keeping second part (right)
+varLabel=str_split(varSorted,pattern = 'In_',simplify = T)[,2]
+
+
+###################################################
+### code chunk number 19: coloringX
+###################################################
+colorCity=ifelse(citySorted=='Lima','red','black')
+
+
+###################################################
+### code chunk number 20: heat2_code
+###################################################
+#reordering 
+heat2 = heat1+ scale_x_discrete(limits=varSorted,labels=varLabel)
+heat2 = heat2+ scale_y_discrete(limits=citySorted)
+
+#change palette to highlight top, bottom and average
+heat2 = heat2+ scale_fill_gradient2(midpoint = 50,
+                                    mid= 'white',
+                                    low = 'red',
+                                    high = 'darkgreen')
+# Readable text
+heat2 = heat2 + labs(x="",y="")
+heat2 = heat2 + theme(axis.text.x = element_text(angle = 90,
+                                               hjust = 1))
+# Highlighting one city (possible warning or error)
+heat2 = heat2 + theme(axis.text.y=element_text(colour=colorCity,
+                                               size=6))
+
+
+###################################################
+### code chunk number 21: heat2
+###################################################
+heat2 
+
+
+###################################################
+### code chunk number 22: computingMeans
+###################################################
+
+safe$meanDIN=rowMeans(safe[,c(grep("D_In", names(safe) ))])
+safe$meanDOUT=rowMeans(safe[,c(grep("D_Out", names(safe) ))])
+
+safe$meanHIN=rowMeans(safe[,c(grep("H_In", names(safe) ))])
+safe$meanHOUT=rowMeans(safe[,c(grep("H_Out", names(safe) ))])
+
+safe$meanIIN=rowMeans(safe[,c(grep("I_In", names(safe) ))])
+safe$meanIOUT=rowMeans(safe[,c(grep("I_Out", names(safe) ))])
+
+safe$meanPIN=rowMeans(safe[,c(grep("P_In", names(safe) ))])
+safe$meanPOUT=rowMeans(safe[,c(grep("P_Out", names(safe) ))])
+
+
+###################################################
+### code chunk number 23: safeINS_code
+###################################################
+safeINS=safe[,c(grep("IN$|^city", names(safe)))] # ends with
+NewNames=c("city",'DIGITAL','HEALTH','INFRA','PERSON')
+names(safeINS)=NewNames
+
+
+###################################################
+### code chunk number 24: multivariate.Rnw:368-370
+###################################################
+InValues=c('DIGITAL','HEALTH','INFRA','PERSON')
+safeINS$top=apply(safeINS[,InValues],1,mean)>90
+
+
+###################################################
+### code chunk number 25: reshape_safeINS
+###################################################
+safeINLongTop = melt(safeINS, id.vars = c('city','top'))
+
+
+###################################################
+### code chunk number 26: paral1_code
+###################################################
+library(ggrepel)
+
+#conditions
+conditionColor=ifelse(safeINLongTop$top,'black','grey90')
+conditionLabel=ifelse(safeINLongTop$top,safeINLongTop$city,"")
+
+# base
+basep1 = ggplot(safeINLongTop, aes(x = variable,
+                                   y = value,
+                                   group = city)) 
+basep1 = basep1 + theme_classic()
+
+# parallels using PATH
+paral1 = basep1 + geom_path(color=conditionColor)
+# annotating
+paral1 = paral1 + geom_text_repel(aes(label=conditionLabel),
+                                      size=4)
+
+
+###################################################
+### code chunk number 27: paral1
+###################################################
+paral1
+
+
+###################################################
+### code chunk number 28: reordering
+###################################################
+#reordering
+newOrder=c("DIGITAL", "INFRA", "PERSON", "HEALTH")
+safeINLongTop$variable=ordered(safeINLongTop$variable, 
+                               levels = newOrder)
+#sorting the long data frame
+safeINLongTop=safeINLongTop[order(safeINLongTop$variable),]
+
+
+###################################################
+### code chunk number 29: paral1b_code
+###################################################
+library(ggrepel)
+#reloading
+
+# conditions:
+conditionColor=ifelse(safeINLongTop$top,'black','grey90')
+conditionLabel=ifelse(safeINLongTop$top,safeINLongTop$city,"")
+#base
+basep1b = ggplot(safeINLongTop, aes(x = variable,y = value,
+                                    group = city)) 
+#theme
+basep1b = basep1b + theme_classic()
+#lines
+paral1b = basep1b +  geom_path(color=conditionColor)
+#text
+paral1b = paral1b + geom_text_repel(aes(label=conditionLabel),
+                                      size=4)
+
+
+###################################################
+### code chunk number 30: paral1b
+###################################################
+paral1b
+
+
+###################################################
+### code chunk number 31: paral2_code
+###################################################
+
+basep2 = ggplot(safeINLongTop[safeINLongTop$top,],
+              aes(x = variable,
+                  y = value, group = city)) + theme_classic()
+
+paral2 = basep2 +  geom_path(aes(color=city))
+
+paral2 = paral2 + theme(legend.position="top",legend.title.align=0.5)
+
+paral2 = paral2 +  guides(color=guide_legend(nrow = 1,
+                                    title.position = "top")) 
+
+
+
+###################################################
+### code chunk number 32: paral2
+###################################################
+paral2 
+
+
+
+###################################################
+### code chunk number 33: safeRadarINS_code
+###################################################
+cities=c('Abu Dhabi', 'Lima' , 'Zurich','London')
+#safeRadar
+safeRadarINS=safeINS[safeINS$city %in% cities,]
+safeRadarINS$top=NULL
+row.names(safeRadarINS)=NULL
+
+
+###################################################
+### code chunk number 34: safeRadarINS_long_code
+###################################################
+safeRadarINS_long=melt(safeRadarINS,id.vars = 'city')
+
+
+###################################################
+### code chunk number 35: radar_code1
+###################################################
+base  = ggplot(safeRadarINS_long,
+               aes(x = variable,
+                   y = value,
+                   group = city))
+base  = base + theme_minimal()
+
+
+###################################################
+### code chunk number 36: radar_code2
+###################################################
+radar = base + geom_polygon(fill = 'gray90', 
+                            size=2,
+                            col='black') 
+radar = radar + coord_polar()
+
+
+###################################################
+### code chunk number 37: radar_code3
+###################################################
+radar = radar +   scale_y_continuous(limits = c(0,100))
+
+
+###################################################
+### code chunk number 38: multivariate.Rnw:557-566
+###################################################
+# for the grid and text:
+GridChanges=element_line(size = 0.8,
+                         colour = "grey80")
+TextChanges= element_text(size=10,
+                          color = 'black')
+
+### more customization
+radar = radar + theme(panel.grid.major = GridChanges,
+                      axis.text.x =TextChanges)
+
+
+###################################################
+### code chunk number 39: radar_code4
+###################################################
+radar = radar + facet_wrap(~city,# one plot per city
+                           ncol = 2) 
+
+
+###################################################
+### code chunk number 40: radar
+###################################################
+radar
+
+

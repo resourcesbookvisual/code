@@ -1,0 +1,894 @@
+### R code from vignette source 'univariate chapter'
+
+###################################################
+### code chunk number 1: univariate.Rnw:24-30
+###################################################
+#link to data
+linkRepo='https://github.com/resourcesbookvisual/data/'
+linkEDU='raw/master/eduwa.csv'
+fullLink=paste0(linkRepo,linkEDU)
+#getting the data: 
+eduwa=read.csv(fullLink,stringsAsFactors = FALSE) 
+
+
+###################################################
+### code chunk number 2: FTloc
+###################################################
+ValuesAndCounts=table(eduwa$LocaleType,useNA = "ifany")
+values=names(ValuesAndCounts)
+counts=as.vector(ValuesAndCounts)
+FTloc=data.frame(Location=values,Count=counts)
+FTloc$Percent=100*round(counts/sum(counts),4)
+# ordering FreqTable by ascending counts
+FTloc=FTloc[order(FTloc$Count),]
+row.names(FTloc)=NULL # resetting row names
+# here it is:
+print(FTloc, row.names = F)
+
+
+###################################################
+### code chunk number 3: univariate.Rnw:48-52
+###################################################
+# adding a level:
+levels(FTloc$Location) = c(levels(FTloc$Location),'Uncategorized')
+# using that level for the 'NA' value:
+FTloc$Location[is.na(FTloc$Location)]='Uncategorized'
+
+
+###################################################
+### code chunk number 4: univariate.Rnw:58-60
+###################################################
+# new column with gap value
+FTloc$Gap=round(FTloc$Percent-25,0)
+
+
+###################################################
+### code chunk number 5: univariate.Rnw:64-66
+###################################################
+# new column with True if gap is positive (False otherwise)
+FTloc$Above_Equal_Share=FTloc$Gap>0
+
+
+###################################################
+### code chunk number 6: univariate.Rnw:76-79
+###################################################
+texts=list(TITLE="Distance from even distribution",
+           sTITLE="Location of Schools in WA State (2018)",
+           SOURCE="Source: US Department of Education")
+
+
+###################################################
+### code chunk number 7: univariate.Rnw:83-84
+###################################################
+rePOSITION=FTloc$Location
+
+
+###################################################
+### code chunk number 8: univariate.Rnw:88-90
+###################################################
+library(ggplot2)
+info1=ggplot(data=FTloc, aes(x=Location,y=Gap,label=Gap))
+
+
+###################################################
+### code chunk number 9: univariate.Rnw:93-94
+###################################################
+barFT1= info1 + geom_bar(stat = 'identity',width = 0.5) 
+
+
+###################################################
+### code chunk number 10: univariate.Rnw:98-99
+###################################################
+barFT1= barFT1 + theme_classic() 
+
+
+###################################################
+### code chunk number 11: univariate.Rnw:105-108
+###################################################
+barFT1= barFT1 + theme(plot.title= element_text(hjust= 0.5),
+                        plot.subtitle= element_text(hjust= 0.5),
+                        plot.caption= element_text(hjust= 0))
+
+
+###################################################
+### code chunk number 12: univariate.Rnw:112-118
+###################################################
+barFT1= barFT1 + theme(axis.ticks= element_blank(),
+                        axis.text.y= element_blank(),
+                        axis.title.y= element_blank(),
+                        axis.title.x= element_blank(),
+                        axis.line.y= element_blank(),
+                        axis.line.x= element_blank())
+
+
+###################################################
+### code chunk number 13: univariate.Rnw:123-126
+###################################################
+barFT1= barFT1+ labs(title=texts$TITLE, 
+                     subtitle = texts$sTITLE,
+                     caption = texts$SOURCE) 
+
+
+###################################################
+### code chunk number 14: univariate.Rnw:130-131
+###################################################
+barFT1= barFT1 + scale_x_discrete(limits=rePOSITION) 
+
+
+###################################################
+### code chunk number 15: univariate.Rnw:136-137
+###################################################
+barFT1=barFT1 + geom_hline(aes(yintercept=0)) 
+
+
+###################################################
+### code chunk number 16: univariate.Rnw:141-143
+###################################################
+#text in bars
+barFT1=barFT1 + geom_label() 
+
+
+###################################################
+### code chunk number 17: barFT1
+###################################################
+library(ggplot2)
+barFT1
+
+
+###################################################
+### code chunk number 18: univariate.Rnw:183-188
+###################################################
+# changes in aes: 
+info2 = ggplot(FTloc, aes(x=Location,
+                          y=Gap,
+                          color=Above_Equal_Share,#new
+                          label=Gap))
+
+
+###################################################
+### code chunk number 19: univariate.Rnw:192-200
+###################################################
+# one for the lollipop stick
+lol1= info2 + geom_segment(aes(y = 0, #from
+                              yend = Gap, #to
+                              x = Location,#from
+                              xend = Location),#to
+                          color = "gray")
+# one for the lollipop head (just a dot)
+lol1= lol1 + geom_point(size=10) 
+
+
+###################################################
+### code chunk number 20: univariate.Rnw:203-207
+###################################################
+lol1 = lol1 + theme_classic()
+lol1 = lol1 + theme(plot.title= element_text(hjust= 0.5),
+                    plot.subtitle= element_text(hjust= 0.5),
+                    plot.caption= element_text(hjust= 0))
+
+
+###################################################
+### code chunk number 21: univariate.Rnw:210-219
+###################################################
+# NO X-AXIS
+lol1 = lol1 + theme(axis.ticks= element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.line.y = element_blank(),
+                    # no more x-axis elements
+                    axis.text.x = element_blank(),
+                    axis.line.x = element_blank(),
+                    axis.title.x = element_blank())
+
+
+###################################################
+### code chunk number 22: univariate.Rnw:222-226
+###################################################
+lol1 = lol1 + labs(title=texts$TITLE,
+                   subtitle = texts$sTITLE,
+                   caption = texts$SOURCE)
+lol1 = lol1 + scale_x_discrete(limits=rePOSITION)
+
+
+###################################################
+### code chunk number 23: univariate.Rnw:230-233
+###################################################
+# annotating threshold
+lol1 = lol1 + geom_hline(yintercept=0,
+                         linetype = "dashed")
+
+
+###################################################
+### code chunk number 24: univariate.Rnw:237-243
+###################################################
+# for 'Gap' values.
+lol1 = lol1 + geom_text(show.legend = FALSE,color='white',size=4)
+# for 'Location' values.
+lol1 = lol1 + geom_label(aes(label=rePOSITION),
+                         color='black',size=3,
+                         y=0,show.legend = FALSE) 
+
+
+###################################################
+### code chunk number 25: univariate.Rnw:247-249
+###################################################
+#coloring
+lol1 = lol1 + scale_color_grey(start=0.6,end=0.2) 
+
+
+###################################################
+### code chunk number 26: univariate.Rnw:252-256
+###################################################
+# legend position and frame
+lol1 = lol1 + theme(legend.position = c(0.8,0.4), 
+        legend.background = element_rect(linetype="solid",
+                                         colour ="grey"))
+
+
+###################################################
+### code chunk number 27: univariate.Rnw:260-262 (eval = FALSE)
+###################################################
+## #  IF YOU PREFER NO LEGEND:
+## lol1 = lol1 + guides(color=FALSE)
+
+
+###################################################
+### code chunk number 28: lol1
+###################################################
+lol1
+
+
+###################################################
+### code chunk number 29: univariate.Rnw:306-309
+###################################################
+linkREPS='raw/master/reps.csv'
+fullLink=paste0(linkRepo,linkREPS)
+reps=read.csv(fullLink, stringsAsFactors = F)
+
+
+###################################################
+### code chunk number 30: FTrep
+###################################################
+ValuesAndCounts=table(reps$Residence,useNA = "ifany")
+values=names(ValuesAndCounts); counts=as.vector(ValuesAndCounts)
+FTrep=data.frame(Residence=values,Legislators=counts)
+FTrep=FTrep[order(FTrep$Legislators),]; row.names(FTrep)=NULL
+
+
+###################################################
+### code chunk number 31: univariate.Rnw:322-325 (eval = FALSE)
+###################################################
+## info3=  ggplot(FTrep,aes(x=Residence,y=Legislators)) + theme_classic()
+## barFT2= info3+geom_bar(stat='identity') + theme_classic()
+## barFT2= barFT2 + scale_x_discrete(limits=FTrep$Residence) 
+
+
+###################################################
+### code chunk number 32: barFT2
+###################################################
+info3=  ggplot(FTrep,aes(x=Residence,y=Legislators)) 
+barFT2= info3+geom_bar(stat='identity') 
+barFT2 + scale_x_discrete(limits=FTrep$Residence)
+
+
+###################################################
+### code chunk number 33: univariate.Rnw:346-350
+###################################################
+# text for titles
+texts_2=list(TITLE="Cities represented by Legislators",
+           sTITLE="WA State House of Representative (2019-2021)",
+           SOURCE="Source: Washington State Legislature.")
+
+
+###################################################
+### code chunk number 34: univariate.Rnw:354-357
+###################################################
+# text for tick labels
+rePOSITION_2=FTrep$Residence
+CountToShow=FTrep$Legislators
+
+
+###################################################
+### code chunk number 35: univariate.Rnw:362-373
+###################################################
+#base
+info4 = ggplot(FTrep, aes(x=Residence,
+                          y=Legislators))
+# Lollipop stick
+lol2= info4 + geom_segment(aes(y = 0,
+                               yend = Legislators,
+                               x = Residence,
+                               xend = Residence),
+                          color = "black")
+# Lollipop head
+lol2= lol2 + geom_point(size=1.5) 
+
+
+###################################################
+### code chunk number 36: univariate.Rnw:377-388
+###################################################
+# theme: 
+lol2 = lol2 + theme_classic()
+
+# titles:
+lol2 = lol2 + labs(title=texts_2$TITLE,
+                   subtitle = texts_2$sTITLE,
+                   caption = texts_2$SOURCE)
+# adjustments: alignment
+lol2 = lol2 + theme(plot.title= element_text(hjust= 0.5),
+                    plot.subtitle= element_text(hjust= 0.5),
+                    plot.caption= element_text(hjust= 0))
+
+
+###################################################
+### code chunk number 37: univariate.Rnw:392-394
+###################################################
+# repositioning
+lol2 = lol2 + scale_x_discrete(limits=rePOSITION_2)
+
+
+###################################################
+### code chunk number 38: univariate.Rnw:398-400
+###################################################
+#flipping
+lol2 = lol2 + coord_flip() 
+
+
+###################################################
+### code chunk number 39: univariate.Rnw:403-408
+###################################################
+# Vertical axis changes
+lol2 = lol2 + theme(axis.title.y=element_blank(),
+                    axis.text.y=element_blank(),
+                    axis.ticks.y=element_blank(),
+                    axis.line.y = element_blank())
+
+
+###################################################
+### code chunk number 40: univariate.Rnw:413-419
+###################################################
+# Horizontal axis changes
+lol2 = lol2 + scale_y_discrete(limits=CountToShow) 
+lol2 = lol2 + theme(axis.line.x = element_blank())
+lol2 = lol2 + theme(panel.grid.major.x = 
+                        element_line(color = "grey60",
+                                     linetype = "dashed"))
+
+
+###################################################
+### code chunk number 41: univariate.Rnw:422-427
+###################################################
+# annotations: text near dot
+lol2 = lol2 + geom_text(aes(label=Residence),# its own aes
+                        hjust = 0,# left justified
+                        nudge_y = 0.1,#move a little to the right
+                        size=2)
+
+
+###################################################
+### code chunk number 42: lol2
+###################################################
+lol2
+
+
+###################################################
+### code chunk number 43: FTcri
+###################################################
+linkRepo='https://github.com/resourcesbookvisual/data/'
+linkCRI='raw/master/crime.csv'
+fullLink=paste0(linkRepo,linkCRI)
+crime=read.csv(fullLink,stringsAsFactors = F)
+
+# preparing frequency table
+library(questionr)
+
+#rename missing values
+crime$crimecat[is.na(crime$crimecat)]='UNcategorized'
+FTcri=freq(crime$crimecat, sort = "dec", total = F,valid = F,digits = 3,cum = T)
+#result:
+FTcri
+
+
+###################################################
+### code chunk number 44: univariate.Rnw:490-492
+###################################################
+FTcri$Crimes=row.names(FTcri)
+row.names(FTcri)=NULL
+
+
+###################################################
+### code chunk number 45: univariate.Rnw:496-498
+###################################################
+# sum of the squares of the percents:
+(HH=sum((FTcri$`%`/100)**2))
+
+
+###################################################
+### code chunk number 46: univariate.Rnw:502-504
+###################################################
+# Inverse Simpson or Laakso-Taagepera Index
+1/HH
+
+
+###################################################
+### code chunk number 47: univariate.Rnw:513-516
+###################################################
+# palette for highlighting the top crimes
+bigCrimes=FTcri$Crimes[1:4]
+TOPS = ifelse(FTcri$Crimes %in% bigCrimes, 'black', 'grey60')
+
+
+###################################################
+### code chunk number 48: univariate.Rnw:523-525
+###################################################
+# base
+info5=ggplot(FTcri,aes(x=Crimes,y=`%cum`)) + theme_classic()
+
+
+###################################################
+### code chunk number 49: univariate.Rnw:529-531
+###################################################
+# horizontal reference line
+annot1= info5 + geom_hline(yintercept = 80, linetype='dashed')
+
+
+###################################################
+### code chunk number 50: univariate.Rnw:534-539
+###################################################
+# creating bars, applying palette to bar border
+cumBar1= annot1 + geom_bar(stat = 'identity',
+                           fill='white',
+                           colour=TOPS, #border
+                           width = 0.2) # thining
+
+
+###################################################
+### code chunk number 51: univariate.Rnw:542-544
+###################################################
+# reordering bars
+cumBar1=cumBar1+ scale_x_discrete(limits=FTcri$Crimes)
+
+
+###################################################
+### code chunk number 52: univariate.Rnw:547-549
+###################################################
+# showing some y axis tick values
+cumBar1=cumBar1 + scale_y_continuous(breaks = c(20,50,80,100))
+
+
+###################################################
+### code chunk number 53: univariate.Rnw:553-557
+###################################################
+# applying palette to text
+cumBar1=cumBar1 + theme(axis.text.x=element_text(angle = 45,
+                                                 hjust = 1,
+                                                 colour=TOPS))
+
+
+###################################################
+### code chunk number 54: cumBar1
+###################################################
+cumBar1
+
+
+###################################################
+### code chunk number 55: univariate.Rnw:598-602
+###################################################
+library(ggQC)
+
+info6=ggplot(FTcri, aes(x=Crimes, y=n)) + theme_classic()
+paret=info6 + stat_pareto()
+
+
+###################################################
+### code chunk number 56: univariate.Rnw:607-626
+###################################################
+#base
+info6=ggplot(FTcri, aes(x=Crimes, y=n)) + theme_classic()
+
+#horizontal reference line at  80%  
+info6=info6 + geom_hline(yintercept = sum(FTcri$n)*0.80,
+                         linetype = "dashed",color='grey90')
+
+#vertical reference line at  4th bar  
+info6=info6 + geom_vline(xintercept = 4,
+                         linetype = "dashed",color='grey90')
+
+#order of the bars
+info6=info6 + scale_x_discrete(limits=FTcri$Crimes)
+
+#angle for x ticks labels, to ease visibility
+info6=info6 + theme(axis.text.x =element_text(angle=45,hjust = 1))
+
+#add the Pareto, but shringk the dots, and recolor bar
+paret=info6 + stat_pareto(point.size = 0.5,bars.fill = "grey")
+
+
+###################################################
+### code chunk number 57: univariate.Rnw:632-638
+###################################################
+paret=paret + 
+      scale_y_continuous(
+        sec.axis=sec_axis(trans = ~./(max(.)*0.95)*100,
+                          name="Cumulative %",
+                          breaks=c(20,50,80,100)),
+        labels=function(x) format(x,scientific=F))
+
+
+###################################################
+### code chunk number 58: paret
+###################################################
+paret
+
+
+###################################################
+### code chunk number 59: univariate.Rnw:669-670
+###################################################
+table(eduwa$High.Grade,useNA = "ifany")
+
+
+###################################################
+### code chunk number 60: univariate.Rnw:675-682
+###################################################
+#get levels
+levelsHG=names(table(eduwa$High.Grade))
+#reorder levels
+ordLabels=c(levelsHG[c(15,14)],
+  sort(as.numeric(levelsHG[c(1:13)])))
+#apply that to the column
+eduwa$High.Grade=ordered(eduwa$High.Grade,levels=ordLabels)
+
+
+###################################################
+### code chunk number 61: univariate.Rnw:698-706
+###################################################
+library(questionr)
+FThg=freq(eduwa$High.Grade, total=F,valid=F,digits=3,cum=T)
+# some changes to FThg:
+FThg$MaxOffer=row.names(FThg)
+row.names(FThg)=NULL
+FThg=FThg[c(4,1:3)]
+names(FThg)[2:4]=c("Counts","Percent","CumPercent")
+FThg
+
+
+###################################################
+### code chunk number 62: univariate.Rnw:722-726
+###################################################
+library(DescTools)
+medianHG=as.vector(Median(eduwa$High.Grade))
+# then
+medianHG
+
+
+###################################################
+### code chunk number 63: univariate.Rnw:736-744
+###################################################
+# color to highlight median
+colCondition=ifelse(ordLabels==medianHG,'black','grey')
+#
+# usual
+info7=ggplot(FThg, aes(MaxOffer,Counts)) + theme_classic()
+barFThg=info7 + geom_bar(stat='identity',
+                         fill=colCondition)
+barFThg=barFThg + scale_x_discrete(limits=ordLabels)
+
+
+###################################################
+### code chunk number 64: barFThg
+###################################################
+barFThg
+
+
+###################################################
+### code chunk number 65: univariate.Rnw:770-772
+###################################################
+# from ordinal to numeric
+eduwa$High.Grade.Num=as.numeric(eduwa$High.Grade)
+
+
+###################################################
+### code chunk number 66: univariate.Rnw:777-780
+###################################################
+info8=ggplot(eduwa,aes(x=0,y=High.Grade.Num)) + theme_classic()
+boxHG =info8 + geom_boxplot() + coord_flip()
+boxHG = boxHG + scale_y_continuous(labels=ordLabels,breaks=1:15)
+
+
+###################################################
+### code chunk number 67: boxHG
+###################################################
+boxHG
+
+
+###################################################
+### code chunk number 68: univariate.Rnw:803-823
+###################################################
+info8=ggplot(eduwa,aes(x=0,y=High.Grade.Num)) + theme_classic()
+
+# first the violin:
+vio1 =info8 + geom_violin(width=1.4, # play with this value
+                          fill="black", color=NA) 
+#now the bxplot
+boxHG2 =vio1 + geom_boxplot(width=0.2,# play with this value
+                            fill='white',
+                            color='grey',
+                            fatten=4) #thicker median
+# flipping
+boxHG2 = boxHG2 + coord_flip()
+# right order of tick labels
+boxHG2 = boxHG2 + scale_y_continuous(labels=ordLabels,
+                                     breaks=1:15)
+# erase unneeded elements.
+boxHG2 = boxHG2 + theme(axis.ticks = element_blank(),
+                        axis.text.y = element_blank(),
+                        axis.title.y = element_blank(),
+                        axis.line.y  = element_blank())
+
+
+###################################################
+### code chunk number 69: boxHG2
+###################################################
+boxHG2
+
+
+###################################################
+### code chunk number 70: univariate.Rnw:849-851
+###################################################
+info9= ggplot(eduwa,aes(x = Reduced.Lunch)) + theme_classic()
+disp1= info9 + geom_bar() 
+
+
+###################################################
+### code chunk number 71: disp1
+###################################################
+disp1
+
+
+###################################################
+### code chunk number 72: univariate.Rnw:865-867
+###################################################
+# how many unique values
+numBars=length(unique(eduwa$Reduced.Lunch))
+
+
+###################################################
+### code chunk number 73: univariate.Rnw:882-885
+###################################################
+(statVals=summary(eduwa$Reduced.Lunch)) # just values
+# In R, you need to get the standard deviation (NOT in Python):
+statVals['std']=sd(eduwa$Reduced.Lunch,na.rm = T)
+
+
+###################################################
+### code chunk number 74: univariate.Rnw:891-892
+###################################################
+(statVals=ceiling(statVals)) 
+
+
+###################################################
+### code chunk number 75: univariate.Rnw:904-905
+###################################################
+IQR=statVals['3rd Qu.']-statVals['1st Qu.']
+
+
+###################################################
+### code chunk number 76: univariate.Rnw:909-911
+###################################################
+statVals['upper']=1.5*IQR + statVals['3rd Qu.']
+statVals['lower']=statVals['1st Qu.']-1.5*IQR
+
+
+###################################################
+### code chunk number 77: univariate.Rnw:920-924
+###################################################
+# no 'lower' this time
+axisKeys=c('Min.','1st Qu.','Median','Mean',
+           '3rd Qu.','upper','Max.')
+myTicks=as.vector(statVals[axisKeys])
+
+
+###################################################
+### code chunk number 78: univariate.Rnw:929-936
+###################################################
+# Share of values considered outliers:
+theVariable=eduwa$Reduced.Lunch
+theVariable = theVariable[!is.na(theVariable)]
+countOutliersUp=sum(theVariable>statVals['upper'])
+shareOut=ceiling(countOutliersUp/length(theVariable)*100)
+# message using the value computed:
+labelOutliers=paste0("Outliers:\n", shareOut,"% of data")
+
+
+###################################################
+### code chunk number 79: univariate.Rnw:949-1003
+###################################################
+# x=0, 0 is the position of line that goes accross the boxplot
+info10= ggplot(eduwa,aes(x=0,y=Reduced.Lunch)) + theme_classic()
+#
+# Changing defaults
+## axis 'breaks'
+info10= info10 + scale_y_continuous(breaks=myTicks)
+#
+## this is the x-axis limits, useful for annotation positions
+info10= info10 + xlim(c(-0.25,0.3)) + coord_flip() 
+#
+# changing width of boxplot
+disp2= info10 + geom_boxplot(width=0.25,outlier.alpha = 0.2) 
+#
+# ANNOTATING
+## Standard deviation:
+## this is a segment showing one standard deviation interval
+disp2=disp2 + annotate("pointrange", 
+                       x=0.15, y=statVals['Mean'],
+                       ymin = (statVals['Mean']+5)-statVals['std'], 
+                       ymax = (statVals['Mean']+5)+statVals['std'],
+                       colour = "gray80", size = 1)
+## mean
+### the line
+disp2=disp2 + geom_hline(yintercept = statVals['Mean'],
+                         linetype='dotted')
+#
+### the text: notice I add '5', to move text
+disp2=disp2 + annotate(geom="text", fill='white',
+                       x=0.2, y=statVals['Mean']+5,
+                       label="Mean",angle=90,size=3)
+## median
+### the line
+disp2=disp2 + geom_hline(yintercept = statVals['Median'],
+                         linetype='dotted')
+#
+### the text: notice I substract '5', to move text
+disp2=disp2 + annotate(geom="text",
+                       x=-0.2, y=statVals['Median']-5,
+                       label="Median",angle=90,size=3)
+## outliers
+### the line
+disp2=disp2 + geom_hline(yintercept = statVals['upper'],
+                         linetype='dashed',color='grey50')
+#
+### the text
+disp2=disp2 + annotate(geom="label",
+                       x=0.1, y=statVals['Max.'],
+                       label=labelOutliers,size=5,hjust=1,
+                       color='grey50')
+# erasing
+disp2=disp2 + theme(axis.ticks.y = element_blank(),
+                    axis.line.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.title.y = element_blank())
+
+
+###################################################
+### code chunk number 80: disp2
+###################################################
+disp2 + ylab("Number of students with Reduced lunch")
+
+
+###################################################
+### code chunk number 81: univariate.Rnw:1046-1048
+###################################################
+theStart=statVals['Min.']
+width=10
+
+
+###################################################
+### code chunk number 82: univariate.Rnw:1052-1055
+###################################################
+oldMax=statVals['Max.']
+newMax=ifelse(oldMax%%width<width,
+              oldMax+(width-oldMax%%width),oldMax)
+
+
+###################################################
+### code chunk number 83: univariate.Rnw:1059-1060
+###################################################
+TheBreaks=seq(theStart,newMax,width)
+
+
+###################################################
+### code chunk number 84: univariate.Rnw:1064-1067
+###################################################
+intervals=cut(eduwa$Reduced.Lunch,
+              breaks=TheBreaks,include.lowest = T)
+topCount=max(table(intervals))
+
+
+###################################################
+### code chunk number 85: univariate.Rnw:1071-1075
+###################################################
+widthY=50
+top_Y=ifelse(topCount%%widthY<widthY,
+             topCount+widthY-topCount%%widthY,topCount)
+vertiVals=seq(0,top_Y,widthY)
+
+
+###################################################
+### code chunk number 86: univariate.Rnw:1087-1090
+###################################################
+N = sum(!is.na(eduwa$Reduced.Lunch)) # number of elements
+MEAN = as.vector(statVals['Mean'])
+STD = as.vector(statVals['std'])
+
+
+###################################################
+### code chunk number 87: univariate.Rnw:1094-1095
+###################################################
+NormalHist=function(x) dnorm(x,mean =MEAN,sd =STD)*N*width
+
+
+###################################################
+### code chunk number 88: univariate.Rnw:1107-1118
+###################################################
+info11= ggplot(eduwa, aes(x = Reduced.Lunch)) + theme_classic()
+# the histogram
+disp3= info11 + geom_histogram(binwidth = width,
+                               #start of first bar
+                               boundary=theStart, 
+                               fill='white',color='grey60') 
+# the normal curve
+disp3= disp3 + stat_function(fun = NormalHist,
+                  color = "black", size = 1,linetype='dashed')
+# the vertical axis values
+disp3= disp3 + scale_y_continuous(breaks = vertiVals)
+
+
+###################################################
+### code chunk number 89: disp3
+###################################################
+disp3 + ylab("Number of students with Reduced lunch")
+
+
+###################################################
+### code chunk number 90: univariate.Rnw:1146-1188
+###################################################
+library(gglorenz)
+#for titles
+HorizontalTitle="Percent of Schools by benefit received"
+VerticalTitle="Cummulative percent of benefit"
+plotTitle="How much receives\nthe 20% that receives most?"
+sourceText="Source: US Department of Education"
+
+# text for annotation
+## computing
+gini=Gini(eduwa$Reduced.Lunch,na.rm = T)
+## pasting message 
+GINItext=paste("Gini:",round(gini,3))
+
+# plot Lorenz curve
+lorenz=info11 + stat_lorenz()
+#
+# diagonal
+lorenz= lorenz + geom_abline(linetype = "dashed") 
+#
+# annotations
+## vertical and horizontal lines
+lorenz= lorenz + geom_vline(xintercept = 0.8,
+                            color='grey80',
+                            lty='dotted') + 
+                 geom_hline(yintercept = 0.5,
+                            color='grey80',
+                            lty='dotted') 
+#
+# changing default axis tick values, positions and aspect
+lorenz= lorenz + scale_y_continuous(breaks = c(0,0.5,0.8),
+                                    position = 'right') + #position
+                 scale_x_continuous(breaks = c(0,0.5,0.8)) + 
+                 coord_fixed() #aspect
+# annotating: adding Gini Index value 
+lorenz= lorenz + annotate(geom="text",
+                          x=0.4, y=0.25,size=3,
+                          label=GINItext)
+# texts
+lorenz= lorenz +  labs(x = HorizontalTitle,
+                       y = VerticalTitle,
+                       title = plotTitle,
+                       caption = sourceText)
+
+
+###################################################
+### code chunk number 91: lorenz
+###################################################
+lorenz
+
+

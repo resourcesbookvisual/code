@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GeoSpatial
-Created on Sun May 10 14:21:38 2020
+Python Codes for Chapter: 
+Insights from MAPs
 
 @author: JoseManuel
 """
@@ -12,8 +12,8 @@ import pandas as pd
 link1='https://github.com/resourcesbookvisual/data/'
 link2='raw/master/contriWA.csv'
 contriWA=pd.read_csv(link1+link2)
-#%%
-contriWA=pd.read_csv('contriWA.csv')
+ 
+ 
 
 #%%
 import geopandas as gpd
