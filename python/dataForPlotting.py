@@ -10,11 +10,12 @@ Created on Sat Nov 13 17:19:38 2021
 
 # link to data
 linkRepo ='https://github.com/resourcesbookvisual/data/'
-linkDemo ="raw/master/eduwa.csv " 
+linkEDU ="raw/master/eduwa.csv"
+fullLink= linkRepo + linkEDU 
 
 # activating Pandas and getting the data:
 import pandas as pd
-eduwa = pd.read_csv(linkRepo + linkDemo)
+eduwa = pd.read_csv(fullLink)
 
 #what you have
 eduwa.dtypes
